@@ -515,16 +515,6 @@
             {"name": "Unify", "to": "subs@unifyfg.com", "cc": []}
         ];
 
-        const SIGNATURE = `
-
-Paul Fusco
-Chief Cook and Bottle Washer
-
-609-787-8047
-40 Wall St., New York, NY 10005
-
-CONFIDENTIALITY NOTICE: The contents of this email message and any attachments are intended solely for the addressee(s) and may contain confidential and/or privileged information and may be legally protected from disclosure. If you are not the intended recipient of this message or their agent, or if this message has been addressed to you in error, please immediately alert the sender by reply email and then delete this message and any attachments. If you are not the intended recipient, you are hereby notified that any use, dissemination, copying, or storage of this message or its attachments is strictly prohibited. Disclaimer: This e-mail message has been sent to you by an independent contractor of DC Lending Group Inc. DBA Gotham Capital. ("GC"). The Sender of this message is not authorized to access the scope of their authority, in the limited capacity in which they serve as an independent contractor of GC, any any information transmitted by the sender in violation of terms, is not endorsed by GC, nor does it reflect the position, statements, or opinions of GC. GC assumes no liability for the contents of this email.`;
-
         let accessToken = null;
         let selectedFiles = [];
 
@@ -680,11 +670,19 @@ CONFIDENTIALITY NOTICE: The contents of this email message and any attachments a
             const industry = document.getElementById('industry').value.trim();
             const balances = document.getElementById('balances').value.trim();
 
-            let body = `***New Deal*** - ${businessName}\n\n`;
-            body += `Status: ${status}\n\n`;
-            if (industry) body += `Industry: ${industry}\n\n`;
-            if (balances) body += `Current Balances:\n${balances}\n\n`;
-            body += SIGNATURE;
+            let body = `***New Deal*** - ${businessName}<br><br>`;
+            body += `<b><u>Status:</u></b> ${status}<br><br>`;
+            if (industry) body += `<b><u>Industry:</u></b> ${industry}<br><br>`;
+            if (balances) body += `<b><u>Current Balances:</u></b><br>${balances.replace(/\n/g, '<br>')}<br><br>`;
+            
+            // Add signature with HTML formatting
+            body += `<br><br>`;
+            body += `<span style="font-size: 14pt; font-weight: bold;">Gotham Capital</span><br>`;
+            body += `<span style="font-size: 12pt; font-style: italic;">Submissions</span><br><br>`;
+            body += `40 Wall St., New York, NY 10005<br>`;
+            body += `gothamcapitalfunding.com<br><br>`;
+            body += `<span style="font-size: 9pt; font-style: italic;">CONFIDENTIALITY NOTICE: The contents of this email message and any attachments are intended solely for the addressee(s) and may contain confidential and/or privileged information and may be legally protected from disclosure. If you are not the intended recipient of this message or their agent, or if this message has been addressed to you in error, please immediately alert the sender by reply email and then delete this message and any attachments. If you are not the intended recipient, you are hereby notified that any use, dissemination, copying, or storage of this message or its attachments is strictly prohibited. Disclaimer: This e-mail message has been sent to you by an independent contractor of DC Lending Group Inc. DBA Gotham Capital. ("GC"). The Sender of this message is not authorized to access the scope of their authority, in the limited capacity in which they serve as an independent contractor of GC, any any information transmitted by the sender in violation of terms, is not endorsed by GC, nor does it reflect the position, statements, or opinions of GC. GC assumes no liability for the contents of this email.</span>`;
+
 
             // Show progress
             document.getElementById('sendButton').disabled = true;
@@ -725,7 +723,7 @@ CONFIDENTIALITY NOTICE: The contents of this email message and any attachments a
                 message: {
                     subject: subject,
                     body: {
-                        contentType: 'Text',
+                        contentType: 'HTML',
                         content: body
                     },
                     toRecipients: [{ emailAddress: { address: to } }],
