@@ -417,7 +417,10 @@
                 
                 <input type="text" id="lenderSearch" class="lender-search" placeholder="🔍 Search lenders..." />
                 
+                <input type="text" id="bulkSelectInput" class="lender-search" placeholder="Type lender names separated by commas (e.g., Altbanq, Biz2Credit, Greenbox)" style="margin-top: 10px;" />
+                
                 <div class="lender-controls">
+                    <button class="select-all-btn" onclick="selectBulkLenders()">Select These Lenders</button>
                     <button class="select-all-btn" onclick="toggleSelectAll()">Select All</button>
                     <span id="selectedCount" style="line-height: 40px; margin-left: 10px; font-weight: 600; color: #667eea;">0 selected</span>
                 </div>
@@ -552,6 +555,38 @@
             const allChecked = Array.from(checkboxes).every(cb => cb.checked);
             checkboxes.forEach(cb => cb.checked = !allChecked);
             updateSelectedCount();
+        }
+
+        function selectBulkLenders() {
+            const bulkInput = document.getElementById('bulkSelectInput').value.trim();
+            if (!bulkInput) {
+                alert('Please enter lender names separated by commas');
+                return;
+            }
+
+            // Parse comma-separated lender names and trim whitespace
+            const lenderNames = bulkInput.split(',').map(name => name.trim().toLowerCase()).filter(name => name);
+            
+            // First, uncheck all
+            document.querySelectorAll('#lenderGrid input[type="checkbox"]').forEach(cb => cb.checked = false);
+            
+            // Then check only the specified lenders
+            let foundCount = 0;
+            document.querySelectorAll('#lenderGrid input[type="checkbox"]').forEach(cb => {
+                const lenderName = cb.dataset.lender.toLowerCase();
+                if (lenderNames.includes(lenderName)) {
+                    cb.checked = true;
+                    foundCount++;
+                }
+            });
+
+            updateSelectedCount();
+            
+            if (foundCount === 0) {
+                alert('No matching lenders found. Please check the names and try again.');
+            } else if (foundCount < lenderNames.length) {
+                alert(`Found ${foundCount} out of ${lenderNames.length} lenders. Some names may not match exactly.`);
+            }
         }
 
         // Search functionality
