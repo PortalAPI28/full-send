@@ -394,6 +394,11 @@
                     <label class="form-label">Current Balances</label>
                     <textarea id="balances" class="form-input"></textarea>
                 </div>
+
+                <div class="form-group">
+                    <label class="form-label">CC (Optional)</label>
+                    <input type="text" id="additionalCC" class="form-input" placeholder="email1@example.com, email2@example.com" />
+                </div>
             </div>
 
             <!-- Attachments Section -->
@@ -688,6 +693,10 @@
             document.getElementById('sendButton').disabled = true;
             document.getElementById('progressSection').style.display = 'block';
 
+            // Get additional CC emails from form
+            const additionalCC = document.getElementById('additionalCC').value.trim();
+            const additionalCCArray = additionalCC ? additionalCC.split(',').map(email => email.trim()).filter(email => email) : [];
+
             let success = 0;
 
             for (let i = 0; i < selectedLenders.length; i++) {
@@ -701,7 +710,9 @@
                 document.getElementById('progressText').textContent = `Sending to ${lenderName}... (${i + 1}/${selectedLenders.length})`;
 
                 try {
-                    await sendEmail(lender.to, [...lender.cc, JASON_EMAIL], subject, body);
+                    // Combine lender CC, Jason, and additional CC emails
+                    const allCCEmails = [...lender.cc, JASON_EMAIL, ...additionalCCArray];
+                    await sendEmail(lender.to, allCCEmails, subject, body);
                     success++;
                 } catch (error) {
                     console.error(`Error sending to ${lenderName}:`, error);
