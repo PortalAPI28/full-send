@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full Send - Automated Email Sender</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+            text-align: center;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: bold;
+            text-decoration: underline;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Segoe UI', sans-serif;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea.form-input {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .drop-zone {
+            border: 3px dashed #27ae60;
+            background: #e8f5e9;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .drop-zone:hover {
+            background: #c8e6c9;
+            border-color: #1e8449;
+        }
+
+        .drop-zone.dragover {
+            background: #a5d6a7;
+            border-color: #1e8449;
+        }
+
+        .drop-zone p {
+            font-size: 16px;
+            color: #27ae60;
+            font-weight: 600;
+        }
+
+        .file-list {
+            margin-top: 10px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .file-item span {
+            font-size: 14px;
+            color: #2c3e50;
+        }
+
+        .file-remove {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .file-remove:hover {
+            background: #c0392b;
+        }
+
+        .auth-button, .send-button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .auth-button {
+            background: #667eea;
+            color: white;
+        }
+
+        .auth-button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .auth-button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .auth-status {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .auth-status.success {
+            color: #27ae60;
+        }
+
+        .auth-status.error {
+            color: #e74c3c;
+        }
+
+        .auth-status.pending {
+            color: #f39c12;
+        }
+
+        .lender-search {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .lender-search:focus {
+            outline: none;
+            border-color: #5568d3;
+        }
+
+        .lender-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .select-all-btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .select-all-btn:hover {
+            background: #5568d3;
+        }
+
+        .lender-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            background: white;
+            border-radius: 10px;
+        }
+
+        .lender-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .lender-item:hover {
+            background: #e9ecef;
+        }
+
+        .lender-item input[type="checkbox"] {
+            margin-right: 8px;
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+        }
+
+        .lender-item label {
+            cursor: pointer;
+            font-size: 13px;
+            color: #2c3e50;
+        }
+
+        .send-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+
+        .send-button:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-section {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #ecf0f1;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .lender-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .lender-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Full Send</h1>
+            <p>&nbsp;&nbsp;Feldman's Lender Full Sender</p>
+        </div>
+
+        <div class="content">
+            <!-- Authentication Section -->
+            <div class="section">
+                <div class="section-title">🔐 Authentication</div>
+                <button id="authButton" class="auth-button" onclick="authenticate()">
+                    Sign in with Microsoft
+                </button>
+                <div id="authStatus" class="auth-status"></div>
+            </div>
+
+            <!-- Deal Information Section -->
+            <div class="section">
+                <div class="section-title">📋 Deal Information</div>
+                
+                <div class="form-group">
+                    <label class="form-label">Subject Line</label>
+                    <input type="text" id="subjectLine" class="form-input" value="***New Deal*** - " />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Business Name</label>
+                    <input type="text" id="businessName" class="form-input" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <input type="text" id="status" class="form-input" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Industry</label>
+                    <input type="text" id="industry" class="form-input" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Current Balances</label>
+                    <textarea id="balances" class="form-input"></textarea>
+                </div>
+            </div>
+
+            <!-- Attachments Section -->
+            <div class="section">
+                <div class="section-title">📎 Attachments</div>
+                <div id="dropZone" class="drop-zone">
+                    <p>📁 Drag & Drop Files Here or Click to Browse</p>
+                </div>
+                <input type="file" id="fileInput" multiple style="display: none;" />
+                <div id="fileList" class="file-list"></div>
+            </div>
+
+            <!-- Lenders Section -->
+            <div class="section">
+                <div class="section-title">📧 Select Lenders</div>
+                
+                <input type="text" id="lenderSearch" class="lender-search" placeholder="🔍 Search lenders..." />
+                
+                <div class="lender-controls">
+                    <button class="select-all-btn" onclick="toggleSelectAll()">Select All</button>
+                    <span id="selectedCount" style="line-height: 40px; margin-left: 10px; font-weight: 600; color: #667eea;">0 selected</span>
+                </div>
+
+                <div id="lenderGrid" class="lender-grid"></div>
+            </div>
+
+            <!-- Send Button -->
+            <button id="sendButton" class="send-button" onclick="sendEmails()" disabled>
+                🚀 Send to Selected Lenders
+            </button>
+
+            <!-- Progress Section -->
+            <div id="progressSection" class="progress-section">
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill">0%</div>
+                </div>
+                <div id="progressText" class="progress-text"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://alcdn.msauth.net/browser/2.14.2/js/msal-browser.min.js"></script>
+    <script>
+        // Configuration
+        const msalConfig = {
+            auth: {
+                clientId: '7fdbb596-abb9-44a3-92df-dee7afb70632',
+                authority: 'https://login.microsoftonline.com/ec4a3ddf-5ebc-44ad-904a-3eed2baff0e3',
+                redirectUri: window.location.origin + window.location.pathname
+            }
+        };
+
+        const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+        const JASON_EMAIL = 'jason@gothamcapitalfunding.com';
+
+        const LENDERS = [
+            {"name": "Altbanq", "to": "nd@altbanq.com", "cc": []},
+            {"name": "Biz2Credit", "to": "ian.wells@biz2credit.com", "cc": ["austin.ray@biz2credit.com"]},
+            {"name": "IOU", "to": "vsamii@ioufinancial.com", "cc": []},
+            {"name": "Smart Step", "to": "submissions@smartstepfunding.com", "cc": ["sales@smartstepfunding.com"]},
+            {"name": "Libertas", "to": "mathias.grez@libertasfunding.com", "cc": []},
+            {"name": "Kalamata", "to": "deals@kalamatacapitalgroup.com", "cc": ["amy.erlich@kalamatacapitalgroup.com"]},
+            {"name": "Newport Capital", "to": "submissions@newportbc.com", "cc": ["kborth@newportbc.com"]},
+            {"name": "Greenbox", "to": "submissions@greenboxcapital.com", "cc": []},
+            {"name": "Fundworks", "to": "newdeals@thefundworks.com", "cc": ["jlee@thefundworks.com"]},
+            {"name": "Vox Funding", "to": "submissions@voxfunding.com", "cc": ["wdorsey@voxfunding.com"]},
+            {"name": "Bizfund", "to": "leor@bizfund.com", "cc": []},
+            {"name": "Fundkite", "to": "submissions@fundkite.com", "cc": ["victoria.t@fundkite.com"]},
+            {"name": "Spartan", "to": "kmcmahon@spartancapitalgroup.com", "cc": ["funding@spartancapitalgroup.com"]},
+            {"name": "CFG", "to": "jpsubs@cfgms.com", "cc": ["jpascalino@cfgms.com"]},
+            {"name": "EBF", "to": "newdeals@ev-bf.com", "cc": ["xotchil.aleman@everestbusinessfunding.com"]},
+            {"name": "Reliance", "to": "uw@reliancef.com", "cc": ["klaudia@reliancef.com"]},
+            {"name": "NewCo", "to": "submissions@newcocapitalgroup.com", "cc": ["gabriel@newcocapitalgroup.com"]},
+            {"name": "Velocity", "to": "subs@velocitycg.com", "cc": ["jesse@velocitycg.com"]},
+            {"name": "Rowan Advance", "to": "deals@rowanadvance.com", "cc": ["eli@rowanadvance.com"]},
+            {"name": "Fuji Funding", "to": "peter@fujifunding.com", "cc": []},
+            {"name": "Fintap", "to": "submissions@fintap.com", "cc": ["asilverstein@fintap.com"]},
+            {"name": "1Fundr", "to": "submissions@1fundr.com", "cc": ["kyle@1fundr.com"]},
+            {"name": "Vital Cap", "to": "submissions@vitalcapfund.com", "cc": ["jaime@vitalcapfund.com"]},
+            {"name": "Merit BF", "to": "submissions@meritbf.com", "cc": ["jstrelzik@meritbf.com"]},
+            {"name": "Fenix", "to": "newdeals@fenixcapitalfunding.com", "cc": ["olegz@fenixcapitalfunding.com"]},
+            {"name": "Amsterdam", "to": "submissions@acgroupinc.com", "cc": ["mhench@acgroupinc.com"]},
+            {"name": "Wall Funding", "to": "iso@wallfunding.com", "cc": []},
+            {"name": "Simply Funding", "to": "submissions@simplyfunding.com", "cc": ["ryanc@simplyfunding.com"]},
+            {"name": "Madison Advance", "to": "newdeals@madisonadvance.com", "cc": ["ezzy@madisonadvance.com"]},
+            {"name": "JRG Funding", "to": "underwriting@jrgfunding.com", "cc": ["alyssa@jrgfunding.com", "eden@jrgfunding.com"]},
+            {"name": "Cobalt Funding", "to": "deals@cobaltfunding.com", "cc": ["jbok@cobaltfunding.com"]},
+            {"name": "Lifetime", "to": "nate@lifetimefundingllc.com", "cc": ["newdeals@lifetimefundingllc.com"]},
+            {"name": "Blackbridge", "to": "subs@bbigm.com", "cc": []},
+            {"name": "EFinancial Tree", "to": "submissions@efinancialtree.com", "cc": ["craig@efinancialtree.com"]},
+            {"name": "Retro Advance", "to": "newdeals@retroadv.com", "cc": ["a.fava@retroadv.com"]},
+            {"name": "Purple Tree", "to": "submissions@purpletreefunding.com", "cc": ["kayla@purpletreefunding.com"]},
+            {"name": "Capybara", "to": "deals@capybarausa.com", "cc": ["doug@capybarausa.com", "Lbreno@capybarausa.com"]},
+            {"name": "Smarter Merchant", "to": "submissions@thesmartermerchant.com", "cc": ["joseph@thesmartermerchant.com"]},
+            {"name": "Alt Funding", "to": "uw@altfunding.com", "cc": []},
+            {"name": "QFS Capital", "to": "submissions@qfscapital.com", "cc": ["josh@qfscapital.com"]},
+            {"name": "GFE", "to": "underwriting@globalfundingexperts.com", "cc": ["lior@globalfundingexperts.com"]},
+            {"name": "Nexi", "to": "submissions@gonexi.com", "cc": ["angie@gonexi.com"]},
+            {"name": "Silverline", "to": "submissions@silverlinefunding.com", "cc": ["chaya@silverlinefunding.com"]},
+            {"name": "Highland Hill", "to": "tristan@highlandhillcap.com", "cc": ["submissions@highlandhillcap.com"]},
+            {"name": "Palisades Advance", "to": "karina@palisadesadvance.com", "cc": ["uw@palisadesadvance.com", "paul@gothamcapitalfunding.com"]},
+            {"name": "Merchant First", "to": "uw@merchantfirst.net", "cc": ["bmontesano@merchantfirst.net"]},
+            {"name": "Dependence", "to": "uw@dependancep.com", "cc": ["klaudia@reliancef.com"]},
+            {"name": "UFS", "to": "irving@ufsfunding.com", "cc": ["subs@ufsfunding.com"]},
+            {"name": "Trofeo Capital", "to": "nick@trofeocap.com", "cc": ["anthony@trofeocap.com", "erika@trofeocap.com"]},
+            {"name": "Ocean Capital", "to": "submissions@ocean-funding.com", "cc": ["steven@ocean-funding.com"]},
+            {"name": "Emmy Capital", "to": "john@emmycapitalgroup.com", "cc": ["processing@emmycapitalgroup.com", "uw@emmycapitalgroup.com", "william@emmycapitalgroup.com"]},
+            {"name": "Lite Fund / Clear Fund", "to": "aron@litefund.co", "cc": ["deals@litefund.co", "frank@litefund.co"]},
+            {"name": "Alo Capital Group", "to": "uw@alocapitalgroup.com", "cc": []},
+            {"name": "Cromwell Capital", "to": "submissions@cromwellcapital.com", "cc": ["ryan@cromwellcapital.com"]},
+            {"name": "Epic Advance", "to": "subs@epic-advance.com", "cc": []},
+            {"name": "M&D Capital NY", "to": "jeremy@mdcapitalny.com", "cc": ["subs@mdcapitalny.com"]},
+            {"name": "Nitro Advance", "to": "subs@nitroadvance.com", "cc": ["admin@nitroadvance.com", "mark@nitroadvance.com"]},
+            {"name": "Seamless", "to": "subs@seamlesscapitalgroup.com", "cc": ["dov@seamlesscapitalgroup.com"]},
+            {"name": "Diverse", "to": "ronen@diversecapitalllc.com", "cc": ["shannon@kash-advance.com"]},
+            {"name": "Prime", "to": "uw@primecapitalpartners.org", "cc": ["anthony@primecapitalpartners.org", "nico@primecapitalpartners.org"]},
+            {"name": "Family Funding", "to": "miki@familyfundinggroup.com", "cc": []},
+            {"name": "Unify", "to": "subs@unifyfg.com", "cc": []}
+        ];
+
+        const SIGNATURE = `
+
+Paul Fusco
+Chief Cook and Bottle Washer
+
+609-787-8047
+40 Wall St., New York, NY 10005
+
+CONFIDENTIALITY NOTICE: The contents of this email message and any attachments are intended solely for the addressee(s) and may contain confidential and/or privileged information and may be legally protected from disclosure. If you are not the intended recipient of this message or their agent, or if this message has been addressed to you in error, please immediately alert the sender by reply email and then delete this message and any attachments. If you are not the intended recipient, you are hereby notified that any use, dissemination, copying, or storage of this message or its attachments is strictly prohibited. Disclaimer: This e-mail message has been sent to you by an independent contractor of DC Lending Group Inc. DBA Gotham Capital. ("GC"). The Sender of this message is not authorized to access the scope of their authority, in the limited capacity in which they serve as an independent contractor of GC, any any information transmitted by the sender in violation of terms, is not endorsed by GC, nor does it reflect the position, statements, or opinions of GC. GC assumes no liability for the contents of this email.`;
+
+        let accessToken = null;
+        let selectedFiles = [];
+
+        // Initialize lenders
+        function initializeLenders() {
+            const grid = document.getElementById('lenderGrid');
+            LENDERS.forEach(lender => {
+                const item = document.createElement('div');
+                item.className = 'lender-item';
+                item.innerHTML = `
+                    <input type="checkbox" id="lender_${lender.name.replace(/\s+/g, '_')}" data-lender="${lender.name}">
+                    <label for="lender_${lender.name.replace(/\s+/g, '_')}">${lender.name}</label>
+                `;
+                grid.appendChild(item);
+            });
+
+            // Update count on checkbox change
+            document.querySelectorAll('#lenderGrid input[type="checkbox"]').forEach(cb => {
+                cb.addEventListener('change', updateSelectedCount);
+            });
+        }
+
+        function updateSelectedCount() {
+            const count = document.querySelectorAll('#lenderGrid input[type="checkbox"]:checked').length;
+            document.getElementById('selectedCount').textContent = `${count} selected`;
+        }
+
+        function toggleSelectAll() {
+            const checkboxes = document.querySelectorAll('#lenderGrid input[type="checkbox"]');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            checkboxes.forEach(cb => cb.checked = !allChecked);
+            updateSelectedCount();
+        }
+
+        // Search functionality
+        document.getElementById('lenderSearch').addEventListener('input', (e) => {
+            const search = e.target.value.toLowerCase();
+            document.querySelectorAll('.lender-item').forEach(item => {
+                const label = item.querySelector('label').textContent.toLowerCase();
+                item.style.display = label.includes(search) ? 'flex' : 'none';
+            });
+        });
+
+        // File handling
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                if (!selectedFiles.find(f => f.name === file.name)) {
+                    selectedFiles.push(file);
+                }
+            });
+            renderFiles();
+        }
+
+        function renderFiles() {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.innerHTML = `
+                    <span>✓ ${file.name}</span>
+                    <button class="file-remove" onclick="removeFile(${index})">×</button>
+                `;
+                fileList.appendChild(item);
+            });
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            renderFiles();
+        }
+
+        // Authentication
+        async function authenticate() {
+            const authButton = document.getElementById('authButton');
+            const authStatus = document.getElementById('authStatus');
+            
+            authButton.disabled = true;
+            authButton.textContent = 'Signing in...';
+            authStatus.textContent = 'Opening browser...';
+            authStatus.className = 'auth-status pending';
+
+            try {
+                const loginRequest = {
+                    scopes: ['Mail.Send', 'User.Read']
+                };
+
+                const response = await msalInstance.loginPopup(loginRequest);
+                accessToken = response.accessToken;
+
+                authButton.textContent = 'Signed In';
+                authStatus.textContent = '● Signed in successfully!';
+                authStatus.className = 'auth-status success';
+                document.getElementById('sendButton').disabled = false;
+            } catch (error) {
+                console.error('Auth error:', error);
+                authButton.disabled = false;
+                authButton.textContent = 'Sign in with Microsoft';
+                authStatus.textContent = '● Authentication failed';
+                authStatus.className = 'auth-status error';
+            }
+        }
+
+        // Send emails
+        async function sendEmails() {
+            // Validate
+            const subject = document.getElementById('subjectLine').value.trim();
+            const businessName = document.getElementById('businessName').value.trim();
+            const status = document.getElementById('status').value.trim();
+
+            if (!subject || !businessName || !status) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const selectedLenders = Array.from(document.querySelectorAll('#lenderGrid input[type="checkbox"]:checked'))
+                .map(cb => cb.dataset.lender);
+
+            if (selectedLenders.length === 0) {
+                alert('Please select at least one lender');
+                return;
+            }
+
+            if (!confirm(`Send emails to ${selectedLenders.length} lenders?`)) {
+                return;
+            }
+
+            // Build email body
+            const industry = document.getElementById('industry').value.trim();
+            const balances = document.getElementById('balances').value.trim();
+
+            let body = `***New Deal*** - ${businessName}\n\n`;
+            body += `Status: ${status}\n\n`;
+            if (industry) body += `Industry: ${industry}\n\n`;
+            if (balances) body += `Current Balances:\n${balances}\n\n`;
+            body += SIGNATURE;
+
+            // Show progress
+            document.getElementById('sendButton').disabled = true;
+            document.getElementById('progressSection').style.display = 'block';
+
+            let success = 0;
+
+            for (let i = 0; i < selectedLenders.length; i++) {
+                const lenderName = selectedLenders[i];
+                const lender = LENDERS.find(l => l.name === lenderName);
+
+                // Update progress
+                const percent = Math.round(((i + 1) / selectedLenders.length) * 100);
+                document.getElementById('progressFill').style.width = percent + '%';
+                document.getElementById('progressFill').textContent = percent + '%';
+                document.getElementById('progressText').textContent = `Sending to ${lenderName}... (${i + 1}/${selectedLenders.length})`;
+
+                try {
+                    await sendEmail(lender.to, [...lender.cc, JASON_EMAIL], subject, body);
+                    success++;
+                } catch (error) {
+                    console.error(`Error sending to ${lenderName}:`, error);
+                }
+            }
+
+            // Complete
+            document.getElementById('progressText').textContent = 'Complete!';
+            alert(`Successfully sent ${success} of ${selectedLenders.length} emails!`);
+            document.getElementById('sendButton').disabled = false;
+            setTimeout(() => {
+                document.getElementById('progressSection').style.display = 'none';
+                document.getElementById('progressFill').style.width = '0%';
+            }, 2000);
+        }
+
+        async function sendEmail(to, cc, subject, body) {
+            const message = {
+                message: {
+                    subject: subject,
+                    body: {
+                        contentType: 'Text',
+                        content: body
+                    },
+                    toRecipients: [{ emailAddress: { address: to } }],
+                    ccRecipients: cc.map(email => ({ emailAddress: { address: email } }))
+                }
+            };
+
+            // Handle attachments
+            if (selectedFiles.length > 0) {
+                message.message.attachments = await Promise.all(
+                    selectedFiles.map(file => fileToAttachment(file))
+                );
+            }
+
+            const response = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(message)
+            });
+
+            if (!response.ok) {
+                throw new Error('Email send failed');
+            }
+        }
+
+        function fileToAttachment(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const base64 = reader.result.split(',')[1];
+                    resolve({
+                        '@odata.type': '#microsoft.graph.fileAttachment',
+                        name: file.name,
+                        contentBytes: base64
+                    });
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            initializeLenders();
+            updateSelectedCount();
+        });
+    </script>
+</body>
+</html>
