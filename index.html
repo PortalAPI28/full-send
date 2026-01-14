@@ -246,15 +246,53 @@
             background: #5568d3;
         }
 
+        .risk-section {
+            margin-bottom: 25px;
+        }
+
+        .risk-header {
+            font-size: 18px;
+            font-weight: bold;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .risk-header.low {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .risk-header.mid {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .risk-header.high {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
         .lender-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
+            grid-auto-flow: column;
             gap: 10px;
-            max-height: 400px;
-            overflow-y: auto;
             padding: 10px;
             background: white;
             border-radius: 10px;
+        }
+
+        .lender-grid[data-risk="low"] {
+            grid-template-rows: repeat(3, auto);
+        }
+
+        .lender-grid[data-risk="mid"] {
+            grid-template-rows: repeat(13, auto);
+        }
+
+        .lender-grid[data-risk="high"] {
+            grid-template-rows: repeat(6, auto);
         }
 
         .lender-item {
@@ -425,7 +463,7 @@
                     <span id="selectedCount" style="line-height: 40px; margin-left: 10px; font-weight: 600; color: #667eea;">0 selected</span>
                 </div>
 
-                <div id="lenderGrid" class="lender-grid"></div>
+                <div id="lenderContainer"></div>
             </div>
 
             <!-- Send Button -->
@@ -459,99 +497,124 @@
         const JASON_EMAIL = 'jason@gothamcapitalfunding.com';
 
         const LENDERS = [
-            {"name": "Altbanq", "to": "nd@altbanq.com", "cc": []},
-            {"name": "Biz2Credit", "to": "ian.wells@biz2credit.com", "cc": ["austin.ray@biz2credit.com"]},
-            {"name": "IOU", "to": "vsamii@ioufinancial.com", "cc": []},
-            {"name": "Smart Step", "to": "submissions@smartstepfunding.com", "cc": ["sales@smartstepfunding.com"]},
-            {"name": "Libertas", "to": "mathias.grez@libertasfunding.com", "cc": []},
-            {"name": "Kalamata", "to": "deals@kalamatacapitalgroup.com", "cc": ["amy.erlich@kalamatacapitalgroup.com"]},
-            {"name": "Newport Capital", "to": "submissions@newportbc.com", "cc": ["kborth@newportbc.com"]},
-            {"name": "Greenbox", "to": "submissions@greenboxcapital.com", "cc": []},
-            {"name": "Fundworks", "to": "newdeals@thefundworks.com", "cc": ["jlee@thefundworks.com"]},
-            {"name": "Vox Funding", "to": "submissions@voxfunding.com", "cc": ["wdorsey@voxfunding.com"]},
-            {"name": "Bizfund", "to": "leor@bizfund.com", "cc": []},
-            {"name": "Fundkite", "to": "submissions@fundkite.com", "cc": ["victoria.t@fundkite.com"]},
-            {"name": "Spartan", "to": "kmcmahon@spartancapitalgroup.com", "cc": ["funding@spartancapitalgroup.com"]},
-            {"name": "CFG", "to": "jpsubs@cfgms.com", "cc": ["jpascalino@cfgms.com"]},
-            {"name": "EBF", "to": "newdeals@ev-bf.com", "cc": ["xotchil.aleman@everestbusinessfunding.com"]},
-            {"name": "Reliance", "to": "uw@reliancef.com", "cc": ["klaudia@reliancef.com"]},
-            {"name": "NewCo", "to": "submissions@newcocapitalgroup.com", "cc": ["gabriel@newcocapitalgroup.com"]},
-            {"name": "Velocity", "to": "subs@velocitycg.com", "cc": ["jesse@velocitycg.com"]},
-            {"name": "Rowan Advance", "to": "deals@rowanadvance.com", "cc": ["eli@rowanadvance.com"]},
-            {"name": "Fuji Funding", "to": "peter@fujifunding.com", "cc": []},
-            {"name": "Fintap", "to": "submissions@fintap.com", "cc": ["asilverstein@fintap.com"]},
-            {"name": "1Fundr", "to": "submissions@1fundr.com", "cc": ["kyle@1fundr.com"]},
-            {"name": "Vital Cap", "to": "submissions@vitalcapfund.com", "cc": ["jaime@vitalcapfund.com"]},
-            {"name": "Merit BF", "to": "submissions@meritbf.com", "cc": ["jstrelzik@meritbf.com"]},
-            {"name": "Fenix", "to": "newdeals@fenixcapitalfunding.com", "cc": ["olegz@fenixcapitalfunding.com"]},
-            {"name": "Amsterdam", "to": "submissions@acgroupinc.com", "cc": ["mhench@acgroupinc.com"]},
-            {"name": "Wall Funding", "to": "iso@wallfunding.com", "cc": []},
-            {"name": "Simply Funding", "to": "submissions@simplyfunding.com", "cc": ["ryanc@simplyfunding.com"]},
-            {"name": "Madison Advance", "to": "newdeals@madisonadvance.com", "cc": ["ezzy@madisonadvance.com"]},
-            {"name": "JRG Funding", "to": "underwriting@jrgfunding.com", "cc": ["alyssa@jrgfunding.com", "eden@jrgfunding.com"]},
-            {"name": "Cobalt Funding", "to": "deals@cobaltfunding.com", "cc": ["jbok@cobaltfunding.com"]},
-            {"name": "Lifetime", "to": "nate@lifetimefundingllc.com", "cc": ["newdeals@lifetimefundingllc.com"]},
-            {"name": "Blackbridge", "to": "subs@bbigm.com", "cc": []},
-            {"name": "EFinancial Tree", "to": "submissions@efinancialtree.com", "cc": ["craig@efinancialtree.com"]},
-            {"name": "Retro Advance", "to": "newdeals@retroadv.com", "cc": ["a.fava@retroadv.com"]},
-            {"name": "Purple Tree", "to": "submissions@purpletreefunding.com", "cc": ["kayla@purpletreefunding.com"]},
-            {"name": "Capybara", "to": "deals@capybarausa.com", "cc": ["doug@capybarausa.com", "Lbreno@capybarausa.com"]},
-            {"name": "Smarter Merchant", "to": "submissions@thesmartermerchant.com", "cc": ["joseph@thesmartermerchant.com"]},
-            {"name": "Alt Funding", "to": "uw@altfunding.com", "cc": []},
-            {"name": "QFS Capital", "to": "submissions@qfscapital.com", "cc": ["josh@qfscapital.com"]},
-            {"name": "GFE", "to": "underwriting@globalfundingexperts.com", "cc": ["lior@globalfundingexperts.com"]},
-            {"name": "Nexi", "to": "submissions@gonexi.com", "cc": ["angie@gonexi.com"]},
-            {"name": "Silverline", "to": "submissions@silverlinefunding.com", "cc": ["chaya@silverlinefunding.com"]},
-            {"name": "Highland Hill", "to": "tristan@highlandhillcap.com", "cc": ["submissions@highlandhillcap.com"]},
-            {"name": "Palisades Advance", "to": "karina@palisadesadvance.com", "cc": ["uw@palisadesadvance.com", "paul@gothamcapitalfunding.com"]},
-            {"name": "Merchant First", "to": "uw@merchantfirst.net", "cc": ["bmontesano@merchantfirst.net"]},
-            {"name": "Dependence", "to": "uw@dependancep.com", "cc": ["klaudia@reliancef.com"]},
-            {"name": "UFS", "to": "irving@ufsfunding.com", "cc": ["subs@ufsfunding.com"]},
-            {"name": "Trofeo Capital", "to": "nick@trofeocap.com", "cc": ["anthony@trofeocap.com", "erika@trofeocap.com"]},
-            {"name": "Ocean Capital", "to": "submissions@ocean-funding.com", "cc": ["steven@ocean-funding.com"]},
-            {"name": "Emmy Capital", "to": "john@emmycapitalgroup.com", "cc": ["processing@emmycapitalgroup.com", "uw@emmycapitalgroup.com", "william@emmycapitalgroup.com"]},
-            {"name": "Lite Fund / Clear Fund", "to": "aron@litefund.co", "cc": ["deals@litefund.co", "frank@litefund.co"]},
-            {"name": "Alo Capital Group", "to": "uw@alocapitalgroup.com", "cc": []},
-            {"name": "Cromwell Capital", "to": "submissions@cromwellcapital.com", "cc": ["ryan@cromwellcapital.com"]},
-            {"name": "Epic Advance", "to": "subs@epic-advance.com", "cc": []},
-            {"name": "M&D Capital NY", "to": "jeremy@mdcapitalny.com", "cc": ["subs@mdcapitalny.com"]},
-            {"name": "Nitro Advance", "to": "subs@nitroadvance.com", "cc": ["admin@nitroadvance.com", "mark@nitroadvance.com"]},
-            {"name": "Seamless", "to": "subs@seamlesscapitalgroup.com", "cc": ["dov@seamlesscapitalgroup.com"]},
-            {"name": "Diverse", "to": "ronen@diversecapitalllc.com", "cc": ["shannon@kash-advance.com"]},
-            {"name": "Prime", "to": "uw@primecapitalpartners.org", "cc": ["anthony@primecapitalpartners.org", "nico@primecapitalpartners.org"]},
-            {"name": "Family Funding", "to": "miki@familyfundinggroup.com", "cc": []},
-            {"name": "Unify", "to": "subs@unifyfg.com", "cc": []}
+            // LOW RISK
+            {"name": "Altbanq", "to": "nd@altbanq.com", "cc": [], "risk": "low"},
+            {"name": "Biz2Credit", "to": "ian.wells@biz2credit.com", "cc": ["austin.ray@biz2credit.com"], "risk": "low"},
+            {"name": "IOU", "to": "vsamii@ioufinancial.com", "cc": [], "risk": "low"},
+            {"name": "Smart Step", "to": "submissions@smartstepfunding.com", "cc": ["sales@smartstepfunding.com"], "risk": "low"},
+            {"name": "Libertas", "to": "mathias.grez@libertasfunding.com", "cc": [], "risk": "low"},
+            {"name": "Kalamata", "to": "deals@kalamatacapitalgroup.com", "cc": ["amy.erlich@kalamatacapitalgroup.com"], "risk": "low"},
+            {"name": "Newport Capital", "to": "submissions@newportbc.com", "cc": ["kborth@newportbc.com"], "risk": "low"},
+            {"name": "Greenbox", "to": "submissions@greenboxcapital.com", "cc": [], "risk": "low"},
+            // MID RISK
+            {"name": "Fundworks", "to": "newdeals@thefundworks.com", "cc": ["jlee@thefundworks.com"], "risk": "mid"},
+            {"name": "Vox Funding", "to": "submissions@voxfunding.com", "cc": ["wdorsey@voxfunding.com"], "risk": "mid"},
+            {"name": "Bizfund", "to": "leor@bizfund.com", "cc": [], "risk": "mid"},
+            {"name": "Fundkite", "to": "submissions@fundkite.com", "cc": ["victoria.t@fundkite.com"], "risk": "mid"},
+            {"name": "Spartan", "to": "kmcmahon@spartancapitalgroup.com", "cc": ["funding@spartancapitalgroup.com"], "risk": "mid"},
+            {"name": "CFG", "to": "jpsubs@cfgms.com", "cc": ["jpascalino@cfgms.com"], "risk": "mid"},
+            {"name": "EBF", "to": "newdeals@ev-bf.com", "cc": ["xotchil.aleman@everestbusinessfunding.com"], "risk": "mid"},
+            {"name": "Reliance", "to": "uw@reliancef.com", "cc": ["klaudia@reliancef.com"], "risk": "mid"},
+            {"name": "NewCo", "to": "submissions@newcocapitalgroup.com", "cc": ["gabriel@newcocapitalgroup.com"], "risk": "mid"},
+            {"name": "Velocity", "to": "subs@velocitycg.com", "cc": ["jesse@velocitycg.com"], "risk": "mid"},
+            {"name": "Rowan Advance", "to": "deals@rowanadvance.com", "cc": ["eli@rowanadvance.com"], "risk": "mid"},
+            {"name": "Fuji Funding", "to": "peter@fujifunding.com", "cc": [], "risk": "mid"},
+            {"name": "Fintap", "to": "submissions@fintap.com", "cc": ["asilverstein@fintap.com"], "risk": "mid"},
+            {"name": "1Fundr", "to": "submissions@1fundr.com", "cc": ["kyle@1fundr.com"], "risk": "mid"},
+            {"name": "Vital Cap", "to": "submissions@vitalcapfund.com", "cc": ["jaime@vitalcapfund.com"], "risk": "mid"},
+            {"name": "Merit BF", "to": "submissions@meritbf.com", "cc": ["jstrelzik@meritbf.com"], "risk": "mid"},
+            {"name": "Fenix", "to": "newdeals@fenixcapitalfunding.com", "cc": ["olegz@fenixcapitalfunding.com"], "risk": "mid"},
+            {"name": "Amsterdam", "to": "submissions@acgroupinc.com", "cc": ["mhench@acgroupinc.com"], "risk": "mid"},
+            {"name": "Wall Funding", "to": "iso@wallfunding.com", "cc": [], "risk": "mid"},
+            {"name": "Simply Funding", "to": "submissions@simplyfunding.com", "cc": ["ryanc@simplyfunding.com"], "risk": "mid"},
+            {"name": "Madison Advance", "to": "newdeals@madisonadvance.com", "cc": ["ezzy@madisonadvance.com"], "risk": "mid"},
+            {"name": "JRG Funding", "to": "underwriting@jrgfunding.com", "cc": ["alyssa@jrgfunding.com", "eden@jrgfunding.com"], "risk": "mid"},
+            {"name": "Cobalt Funding", "to": "deals@cobaltfunding.com", "cc": ["jbok@cobaltfunding.com"], "risk": "mid"},
+            {"name": "Lifetime", "to": "nate@lifetimefundingllc.com", "cc": ["newdeals@lifetimefundingllc.com"], "risk": "mid"},
+            {"name": "Blackbridge", "to": "subs@bbigm.com", "cc": [], "risk": "mid"},
+            {"name": "EFinancial Tree", "to": "submissions@efinancialtree.com", "cc": ["craig@efinancialtree.com"], "risk": "mid"},
+            {"name": "Retro Advance", "to": "newdeals@retroadv.com", "cc": ["a.fava@retroadv.com"], "risk": "mid"},
+            {"name": "Purple Tree", "to": "submissions@purpletreefunding.com", "cc": ["kayla@purpletreefunding.com"], "risk": "mid"},
+            {"name": "Capybara", "to": "deals@capybarausa.com", "cc": ["doug@capybarausa.com", "Lbreno@capybarausa.com"], "risk": "mid"},
+            {"name": "Smarter Merchant", "to": "submissions@thesmartermerchant.com", "cc": ["joseph@thesmartermerchant.com"], "risk": "mid"},
+            {"name": "Alt Funding", "to": "uw@altfunding.com", "cc": [], "risk": "mid"},
+            {"name": "QFS Capital", "to": "submissions@qfscapital.com", "cc": ["josh@qfscapital.com"], "risk": "mid"},
+            {"name": "GFE", "to": "underwriting@globalfundingexperts.com", "cc": ["lior@globalfundingexperts.com"], "risk": "mid"},
+            {"name": "Nexi", "to": "submissions@gonexi.com", "cc": ["angie@gonexi.com"], "risk": "mid"},
+            {"name": "Silverline", "to": "submissions@silverlinefunding.com", "cc": ["chaya@silverlinefunding.com"], "risk": "mid"},
+            {"name": "Highland Hill", "to": "tristan@highlandhillcap.com", "cc": ["submissions@highlandhillcap.com"], "risk": "mid"},
+            {"name": "Palisades Advance", "to": "karina@palisadesadvance.com", "cc": ["uw@palisadesadvance.com", "paul@gothamcapitalfunding.com"], "risk": "mid"},
+            // HIGH RISK
+            {"name": "Merchant First", "to": "uw@merchantfirst.net", "cc": ["bmontesano@merchantfirst.net"], "risk": "high"},
+            {"name": "Dependence", "to": "uw@dependancep.com", "cc": ["klaudia@reliancef.com"], "risk": "high"},
+            {"name": "UFS", "to": "irving@ufsfunding.com", "cc": ["subs@ufsfunding.com"], "risk": "high"},
+            {"name": "Trofeo Capital", "to": "nick@trofeocap.com", "cc": ["anthony@trofeocap.com", "erika@trofeocap.com"], "risk": "high"},
+            {"name": "Ocean Capital", "to": "submissions@ocean-funding.com", "cc": ["steven@ocean-funding.com"], "risk": "high"},
+            {"name": "Emmy Capital", "to": "john@emmycapitalgroup.com", "cc": ["processing@emmycapitalgroup.com", "uw@emmycapitalgroup.com", "william@emmycapitalgroup.com"], "risk": "high"},
+            {"name": "Lite Fund / Clear Fund", "to": "aron@litefund.co", "cc": ["deals@litefund.co", "frank@litefund.co"], "risk": "high"},
+            {"name": "Alo Capital Group", "to": "uw@alocapitalgroup.com", "cc": [], "risk": "high"},
+            {"name": "Cromwell Capital", "to": "submissions@cromwellcapital.com", "cc": ["ryan@cromwellcapital.com"], "risk": "high"},
+            {"name": "Epic Advance", "to": "subs@epic-advance.com", "cc": [], "risk": "high"},
+            {"name": "M&D Capital NY", "to": "jeremy@mdcapitalny.com", "cc": ["subs@mdcapitalny.com"], "risk": "high"},
+            {"name": "Nitro Advance", "to": "subs@nitroadvance.com", "cc": ["admin@nitroadvance.com", "mark@nitroadvance.com"], "risk": "high"},
+            {"name": "Seamless", "to": "subs@seamlesscapitalgroup.com", "cc": ["dov@seamlesscapitalgroup.com"], "risk": "high"},
+            {"name": "Diverse", "to": "ronen@diversecapitalllc.com", "cc": ["shannon@kash-advance.com"], "risk": "high"},
+            {"name": "Prime", "to": "uw@primecapitalpartners.org", "cc": ["anthony@primecapitalpartners.org", "nico@primecapitalpartners.org"], "risk": "high"},
+            {"name": "Family Funding", "to": "miki@familyfundinggroup.com", "cc": [], "risk": "high"},
+            {"name": "Unify", "to": "subs@unifyfg.com", "cc": [], "risk": "high"}
         ];
 
         let accessToken = null;
         let selectedFiles = [];
 
-        // Initialize lenders
+        // Initialize lenders with risk categories
         function initializeLenders() {
-            const grid = document.getElementById('lenderGrid');
-            LENDERS.forEach(lender => {
-                const item = document.createElement('div');
-                item.className = 'lender-item';
-                item.innerHTML = `
-                    <input type="checkbox" id="lender_${lender.name.replace(/\s+/g, '_')}" data-lender="${lender.name}">
-                    <label for="lender_${lender.name.replace(/\s+/g, '_')}">${lender.name}</label>
-                `;
-                grid.appendChild(item);
+            const container = document.getElementById('lenderContainer');
+            
+            // Create sections for each risk level
+            const risks = ['low', 'mid', 'high'];
+            const riskLabels = {'low': '🟢 Low Risk', 'mid': '🟡 Mid Risk', 'high': '🔴 High Risk'};
+            
+            risks.forEach(risk => {
+                const section = document.createElement('div');
+                section.className = 'risk-section';
+                
+                const header = document.createElement('div');
+                header.className = `risk-header ${risk}`;
+                header.textContent = riskLabels[risk];
+                section.appendChild(header);
+                
+                const grid = document.createElement('div');
+                grid.className = 'lender-grid';
+                grid.dataset.risk = risk;
+                
+                LENDERS.filter(l => l.risk === risk).forEach(lender => {
+                    const item = document.createElement('div');
+                    item.className = 'lender-item';
+                    item.innerHTML = `
+                        <input type="checkbox" id="lender_${lender.name.replace(/\s+/g, '_')}" data-lender="${lender.name}">
+                        <label for="lender_${lender.name.replace(/\s+/g, '_')}">${lender.name}</label>
+                    `;
+                    grid.appendChild(item);
+                });
+                
+                section.appendChild(grid);
+                container.appendChild(section);
             });
 
             // Update count on checkbox change
-            document.querySelectorAll('#lenderGrid input[type="checkbox"]').forEach(cb => {
+            document.querySelectorAll('input[type="checkbox"][data-lender]').forEach(cb => {
                 cb.addEventListener('change', updateSelectedCount);
             });
         }
 
         function updateSelectedCount() {
-            const count = document.querySelectorAll('#lenderGrid input[type="checkbox"]:checked').length;
+            const count = document.querySelectorAll('input[type="checkbox"][data-lender]:checked').length;
             document.getElementById('selectedCount').textContent = `${count} selected`;
         }
 
         function toggleSelectAll() {
-            const checkboxes = document.querySelectorAll('#lenderGrid input[type="checkbox"]');
+            const checkboxes = document.querySelectorAll('input[type="checkbox"][data-lender]');
             const allChecked = Array.from(checkboxes).every(cb => cb.checked);
             checkboxes.forEach(cb => cb.checked = !allChecked);
             updateSelectedCount();
@@ -564,15 +627,15 @@
                 return;
             }
 
-            // Parse comma-separated lender names and trim whitespace
+            // Parse comma-separated lender names and trim whitespace (case-insensitive)
             const lenderNames = bulkInput.split(',').map(name => name.trim().toLowerCase()).filter(name => name);
             
             // First, uncheck all
-            document.querySelectorAll('#lenderGrid input[type="checkbox"]').forEach(cb => cb.checked = false);
+            document.querySelectorAll('input[type="checkbox"][data-lender]').forEach(cb => cb.checked = false);
             
             // Then check only the specified lenders
             let foundCount = 0;
-            document.querySelectorAll('#lenderGrid input[type="checkbox"]').forEach(cb => {
+            document.querySelectorAll('input[type="checkbox"][data-lender]').forEach(cb => {
                 const lenderName = cb.dataset.lender.toLowerCase();
                 if (lenderNames.includes(lenderName)) {
                     cb.checked = true;
@@ -589,7 +652,7 @@
             }
         }
 
-        // Search functionality
+        // Case-insensitive search functionality
         document.getElementById('lenderSearch').addEventListener('input', (e) => {
             const search = e.target.value.toLowerCase();
             document.querySelectorAll('.lender-item').forEach(item => {
@@ -694,7 +757,7 @@
                 return;
             }
 
-            const selectedLenders = Array.from(document.querySelectorAll('#lenderGrid input[type="checkbox"]:checked'))
+            const selectedLenders = Array.from(document.querySelectorAll('input[type="checkbox"][data-lender]:checked'))
                 .map(cb => cb.dataset.lender);
 
             if (selectedLenders.length === 0) {
@@ -722,7 +785,6 @@
             body += `40 Wall St., New York, NY 10005<br>`;
             body += `gothamcapitalfunding.com<br><br>`;
             body += `<span style="font-size: 9pt; font-style: italic;">CONFIDENTIALITY NOTICE: The contents of this email message and any attachments are intended solely for the addressee(s) and may contain confidential and/or privileged information and may be legally protected from disclosure. If you are not the intended recipient of this message or their agent, or if this message has been addressed to you in error, please immediately alert the sender by reply email and then delete this message and any attachments. If you are not the intended recipient, you are hereby notified that any use, dissemination, copying, or storage of this message or its attachments is strictly prohibited. Disclaimer: This e-mail message has been sent to you by an independent contractor of DC Lending Group Inc. DBA Gotham Capital. ("GC"). The Sender of this message is not authorized to access the scope of their authority, in the limited capacity in which they serve as an independent contractor of GC, any any information transmitted by the sender in violation of terms, is not endorsed by GC, nor does it reflect the position, statements, or opinions of GC. GC assumes no liability for the contents of this email.</span>`;
-
 
             // Show progress
             document.getElementById('sendButton').disabled = true;
