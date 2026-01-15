@@ -459,7 +459,6 @@
                 
                 <div class="lender-controls">
                     <button class="select-all-btn" onclick="selectBulkLenders()">Select These Lenders</button>
-                    <button class="select-all-btn" onclick="toggleSelectAll()">Select All</button>
                     <span id="selectedCount" style="line-height: 40px; margin-left: 10px; font-weight: 600; color: #667eea;">0 selected</span>
                 </div>
 
@@ -564,8 +563,17 @@
             {"name": "Unify", "to": "subs@unifyfg.com", "cc": [], "risk": "high"}
         ];
 
-        let accessToken = null;
+        // Check for saved token on page load
+        let accessToken = sessionStorage.getItem('accessToken');
         let selectedFiles = [];
+
+        // If we have a saved token, update UI
+        if (accessToken) {
+            document.getElementById('authButton').textContent = 'Signed In';
+            document.getElementById('authStatus').textContent = '● Signed in successfully!';
+            document.getElementById('authStatus').className = 'auth-status success';
+            document.getElementById('sendButton').disabled = false;
+        }
 
         // Initialize lenders with risk categories
         function initializeLenders() {
@@ -732,6 +740,7 @@
 
                 const response = await msalInstance.loginPopup(loginRequest);
                 accessToken = response.accessToken;
+                sessionStorage.setItem('accessToken', accessToken);
 
                 authButton.textContent = 'Signed In';
                 authStatus.textContent = '● Signed in successfully!';
