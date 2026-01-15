@@ -726,7 +726,8 @@
 
             try {
                 const loginRequest = {
-                    scopes: ['Mail.Send', 'User.Read']
+                    scopes: ['Mail.Send', 'User.Read'],
+                    prompt: 'select_account'
                 };
 
                 const response = await msalInstance.loginPopup(loginRequest);
