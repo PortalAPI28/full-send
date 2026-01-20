@@ -388,6 +388,43 @@
     </style>
 </head>
 <body>
+    <script>
+        // Password protection
+        (function() {
+            const correctPassword = 'FullSend28$';
+            const sessionKey = 'fullSendAuthenticated';
+            
+            // Check if already authenticated in this session
+            if (sessionStorage.getItem(sessionKey) !== 'true') {
+                let attempts = 0;
+                const maxAttempts = 3;
+                
+                while (attempts < maxAttempts) {
+                    const password = prompt('Enter access code to continue:');
+                    
+                    if (password === null) {
+                        // User clicked cancel
+                        document.body.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: Arial; font-size: 24px; color: #e74c3c;">Access Denied</div>';
+                        throw new Error('Access denied');
+                    }
+                    
+                    if (password === correctPassword) {
+                        sessionStorage.setItem(sessionKey, 'true');
+                        break;
+                    }
+                    
+                    attempts++;
+                    if (attempts < maxAttempts) {
+                        alert(`Incorrect password. ${maxAttempts - attempts} attempts remaining.`);
+                    } else {
+                        document.body.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: Arial; font-size: 24px; color: #e74c3c;">Access Denied - Too Many Failed Attempts</div>';
+                        throw new Error('Access denied');
+                    }
+                }
+            }
+        })();
+    </script>
+    
     <div class="container">
         <div class="header">
             <h1>🚀 Full Send</h1>
@@ -740,6 +777,27 @@
 
                 const response = await msalInstance.loginPopup(loginRequest);
                 accessToken = response.accessToken;
+                
+                // Get user's email address
+                const userEmail = response.account.username.toLowerCase();
+                
+                // Whitelist of authorized emails
+                const authorizedEmails = [
+                    'paul@gothamcapitalfunding.com',
+                    'nicole@gothamcapitalfunding.com'
+                ];
+                
+                // Check if user is authorized
+                if (!authorizedEmails.includes(userEmail)) {
+                    authButton.disabled = false;
+                    authButton.textContent = 'Sign in with Microsoft';
+                    authStatus.textContent = '● Your email is not authorized to use this application';
+                    authStatus.className = 'auth-status error';
+                    accessToken = null;
+                    alert('Access Denied: Your email address is not authorized to use Full Send. Please contact an administrator.');
+                    return;
+                }
+                
                 sessionStorage.setItem('accessToken', accessToken);
 
                 authButton.textContent = 'Signed In';
