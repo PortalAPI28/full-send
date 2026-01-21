@@ -837,6 +837,13 @@
                 return;
             }
 
+            // Validate access token
+            if (!accessToken) {
+                alert('Please sign in with Microsoft before sending emails');
+                document.getElementById('sendButton').disabled = false;
+                return;
+            }
+
             // Build email body
             const industry = document.getElementById('industry').value.trim();
             const balances = document.getElementById('balances').value.trim();
@@ -879,13 +886,27 @@
                     const allCCEmails = [...lender.cc, JASON_EMAIL, ...additionalCCArray];
                     await sendEmail(lender.to, allCCEmails, subject, body);
                     success++;
-                    
-                    // Add 500ms delay between emails to prevent rate limiting
-                    if (i < selectedLenders.length - 1) {
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                    }
                 } catch (error) {
                     console.error(`Error sending to ${lenderName}:`, error);
+                    
+                    // If rate limited (429), wait 2 seconds and retry once
+                    if (error.message.includes('429') || error.message.includes('Too Many Requests')) {
+                        console.log(`Rate limited, retrying ${lenderName} after 2 seconds...`);
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        
+                        try {
+                            await sendEmail(lender.to, allCCEmails, subject, body);
+                            success++;
+                            console.log(`Retry successful for ${lenderName}`);
+                        } catch (retryError) {
+                            console.error(`Retry failed for ${lenderName}:`, retryError);
+                        }
+                    }
+                }
+                
+                // Add 750ms delay between emails to prevent rate limiting
+                if (i < selectedLenders.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 750));
                 }
             }
 
@@ -935,7 +956,13 @@
             });
 
             if (!response.ok) {
-                throw new Error('Email send failed');
+                if (response.status === 429) {
+                    throw new Error('429 - Too Many Requests');
+                } else if (response.status === 401) {
+                    throw new Error('401 - Unauthorized - Please sign in again');
+                } else {
+                    throw new Error(`Email send failed with status ${response.status}`);
+                }
             }
         }
 
