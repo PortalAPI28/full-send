@@ -280,6 +280,25 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .send-results.partial{background:var(--yellow-dim);color:var(--yellow);border:1px solid rgba(210,153,34,0.2);}
 .send-results .failed-list{margin-top:6px;color:var(--red);}
 
+/* Approval overlay */
+.approval-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);animation:fadeIn 0.15s ease-out;}
+.approval-box{background:var(--card);border:1px solid var(--green);border-radius:14px;padding:24px;max-width:400px;width:90%;animation:fadeIn 0.15s ease-out;}
+.approval-box h3{font-size:15px;font-weight:700;color:var(--green);margin-bottom:2px;}
+.approval-box .approval-sub{font-size:11px;color:var(--text-muted);margin-bottom:16px;}
+.approval-box .approval-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.approval-box .approval-grid .field label{font-size:10px;}
+.approval-box .approval-grid .field input{font-size:13px;padding:7px 9px;}
+.approval-btns{display:flex;gap:8px;justify-content:flex-end;}
+.approval-btns .btn{padding:8px 16px;}
+.btn-approve{background:var(--green-dim);color:var(--green);border-color:var(--green);}
+.btn-approve:hover{background:rgba(63,185,80,0.2);}
+
+/* Emailed indicator */
+.emailed-badge{font-size:7px;font-family:var(--mono);background:var(--accent-dim);color:var(--accent);padding:1px 4px;border-radius:3px;margin-left:4px;font-weight:700;}
+
+/* Force resend dot */
+.ctx-dot-blue{background:var(--accent);}
+
 @keyframes fadeIn{from{opacity:0;transform:scale(0.96);}to{opacity:1;transform:scale(1);}}
 
 /* Responsive */
@@ -344,6 +363,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <div class="ctx-menu" id="ctx-menu">
   <button onclick="setLenderState('approved')"><span class="ctx-dot ctx-dot-green"></span>Approved</button>
   <button onclick="setLenderState('declined')"><span class="ctx-dot ctx-dot-red"></span>Declined</button>
+  <button onclick="forceResend()"><span class="ctx-dot ctx-dot-blue"></span>Force Re-send</button>
   <button onclick="setLenderState('')"><span class="ctx-dot ctx-dot-clear"></span>Clear Status</button>
 </div>
 
@@ -594,7 +614,7 @@ async function ensureToken() {
    ============================================================ */
 function newDealData() {
   const id = 'deal_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
-  return { id, rep: '', fields: {}, courts: '', rev: {}, lenders: {}, lenderStates: {}, emailFields: {}, created: new Date().toISOString() };
+  return { id, rep: '', fields: {}, courts: '', rev: {}, lenders: {}, lenderStates: {}, emailFields: {}, emailedLenders: [], approvalData: {}, created: new Date().toISOString() };
 }
 
 function createDeal() {
@@ -698,10 +718,10 @@ function showDashboard() { if(activeView!=='dashboard'&&deals[activeView])saveDe
 function renderDashboard() {
   const c = document.getElementById('content');
   const allDeals = Object.values(deals).sort((a,b) => b.created.localeCompare(a.created));
-  const filtered = getFilteredDeals();
   let totalSent=0,totalApproved=0,totalDeclined=0;
   allDeals.forEach(d => { const p=getDealPips(d); totalSent+=p.sent; totalApproved+=p.approved; totalDeclined+=p.declined; });
 
+  // Rep performance
   let repStatsHtml = '';
   if (reps.length) {
     const repRows = reps.map(r => {
@@ -715,10 +735,76 @@ function renderDashboard() {
     repStatsHtml = `<div class="section" style="margin-bottom:20px;"><div class="section-title">Rep Performance</div><table class="dash-table"><thead><tr><th>Rep</th><th>Deals</th><th>Sent</th><th>Approved</th><th>Declined</th></tr></thead><tbody>${repRows}${unRow}</tbody></table></div>`;
   }
 
+  // Gather all approvals with data
+  const approvals = [];
+  const allLendersFlat = [];
+  Object.entries(LENDERS).forEach(([risk, list]) => {
+    list.forEach((l, i) => { allLendersFlat.push({ ...l, key: `${risk}-${i}` }); });
+  });
+
+  allDeals.forEach(d => {
+    if (!d.lenderStates || !d.approvalData) return;
+    Object.entries(d.lenderStates).forEach(([lk, state]) => {
+      if (state === 'approved' && d.approvalData[lk]) {
+        const ad = d.approvalData[lk];
+        const lender = allLendersFlat.find(l => l.key === lk);
+        approvals.push({
+          business: d.fields?.business || 'Untitled',
+          lenderName: lender ? lender.name : lk,
+          amount: ad.amount || '',
+          term: ad.term || '',
+          rate: ad.rate || '',
+          payment: ad.payment || '',
+          rep: d.rep || '—',
+          dealId: d.id
+        });
+      }
+    });
+  });
+
+  // Approval summary
+  let totalApprovedAmt = 0;
+  let rateSum = 0, rateCount = 0;
+  approvals.forEach(a => {
+    const num = parseFloat((a.amount||'').replace(/[^0-9.]/g,''));
+    if (!isNaN(num)) totalApprovedAmt += num;
+    const rate = parseFloat((a.rate||'').replace(/[^0-9.]/g,''));
+    if (!isNaN(rate)) { rateSum += rate; rateCount++; }
+  });
+  const avgRate = rateCount ? (rateSum / rateCount).toFixed(2) : '—';
+  const avgAmt = approvals.length ? Math.round(totalApprovedAmt / approvals.length).toLocaleString() : '—';
+
+  let approvalsHtml = '';
+  if (approvals.length) {
+    approvalsHtml = `
+    <div class="stats-row" style="margin-top:8px;">
+      <div class="stat-card"><div class="stat-val stat-green">$${Math.round(totalApprovedAmt).toLocaleString()}</div><div class="stat-label">Total Approved</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--text);">${approvals.length}</div><div class="stat-label">Approvals</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--text);">$${avgAmt}</div><div class="stat-label">Avg. Amount</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--text);">${avgRate}</div><div class="stat-label">Avg. Rate</div></div>
+    </div>
+    <div class="section" style="margin-bottom:20px;">
+      <div class="section-title">Approval Details</div>
+      <table class="dash-table">
+        <thead><tr><th>Business</th><th>Lender</th><th>Amount</th><th>Term</th><th>Rate</th><th>Payment</th><th>Rep</th></tr></thead>
+        <tbody>${approvals.map(a => `<tr onclick="openTab('${a.dealId}')">
+          <td class="dt-biz">${esc(a.business)}</td>
+          <td style="font-size:12px;">${esc(a.lenderName)}</td>
+          <td style="font-family:var(--mono);font-size:12px;color:var(--green);font-weight:600;">${esc(a.amount)}</td>
+          <td style="font-family:var(--mono);font-size:12px;">${esc(a.term)}</td>
+          <td style="font-family:var(--mono);font-size:12px;">${esc(a.rate)}</td>
+          <td style="font-family:var(--mono);font-size:12px;">${esc(a.payment)}</td>
+          <td style="font-size:12px;color:var(--accent);">${esc(a.rep)}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+  }
+
   c.innerHTML = `<div class="dash"><div class="dash-hero"><h2>Gotham Full Send</h2><p>Track deals, send submissions, manage approvals — all in one place.</p></div>
     <div class="stats-row"><div class="stat-card"><div class="stat-val stat-accent">${allDeals.length}</div><div class="stat-label">Active Deals</div></div><div class="stat-card"><div class="stat-val stat-yellow">${totalSent}</div><div class="stat-label">Sent</div></div><div class="stat-card"><div class="stat-val stat-green">${totalApproved}</div><div class="stat-label">Approved</div></div><div class="stat-card"><div class="stat-val stat-red">${totalDeclined}</div><div class="stat-label">Declined</div></div></div>
     ${repStatsHtml}
-    ${filtered.length ? `<div class="section-title" style="margin-bottom:8px;">${selectedRep&&selectedRep!=='__unassigned__'?esc(selectedRep)+"'s Deals":selectedRep==='__unassigned__'?'Unassigned Deals':'All Deals'}</div><table class="dash-table"><thead><tr><th>Business</th><th>Rep</th><th>Date</th><th>State</th><th>Sent</th><th>Approved</th><th>Declined</th></tr></thead><tbody>${filtered.map(d=>{const p=getDealPips(d);return`<tr onclick="openTab('${d.id}')"><td class="dt-biz">${esc(getDealLabel(d))}</td><td style="font-size:12px;color:var(--accent);">${esc(d.rep||'—')}</td><td class="dt-date">${d.fields?.date||'—'}</td><td class="dt-state">${d.fields?.state||'—'}</td><td><span class="deal-pip pip-y">${p.sent}</span></td><td><span class="deal-pip pip-g">${p.approved}</span></td><td><span class="deal-pip pip-r">${p.declined}</span></td></tr>`;}).join('')}</tbody></table>` : `<div class="empty-state"><h3>No deals yet</h3><p>Click <strong>+ New Deal</strong> to get started.</p></div>`}
+    ${approvalsHtml}
+    ${!allDeals.length ? `<div class="empty-state"><h3>No deals yet</h3><p>Click <strong>+ New Deal</strong> to get started.</p></div>` : ''}
   </div>`;
 }
 
@@ -861,8 +947,10 @@ function buildLenderTables(id, d) {
       const state = d.lenderStates?.[lk] || '';
       if (state) tr.classList.add(state);
       const portalBadge = l.portal ? '<span class="portal-badge">PORTAL</span>' : '';
+      const emailedList = d.emailedLenders || [];
+      const emailedBadge = (!l.portal && emailedList.includes(lk)) ? '<span class="emailed-badge">EMAILED</span>' : '';
       tr.innerHTML = `
-        <td class="lender-name" title="${l.name}">${l.name}${portalBadge}</td>
+        <td class="lender-name" title="${l.name}">${l.name}${portalBadge}${emailedBadge}</td>
         <td class="lender-email">${l.email}</td>
         <td class="lender-exempt">${l.exempt}</td>
         <td><input class="status-input" data-lk="${lk}" placeholder="Enter status..." value="${esc(d.lenders?.[lk]||'')}"></td>`;
@@ -967,21 +1055,29 @@ async function sendToHighlighted(id) {
   saveDealFromDOM(id);
   const d = deals[id];
   if (!d) return;
+  d.emailedLenders = d.emailedLenders || [];
 
-  // Gather highlighted (sent) lenders that are NOT portal-only
-  const sentKeys = [];
+  // Gather all lenders flat
   const allLenders = [];
   Object.entries(LENDERS).forEach(([risk, list]) => {
     list.forEach((l, i) => { allLenders.push({ ...l, key: `${risk}-${i}` }); });
   });
 
+  // Gather highlighted (sent) lenders that are NOT portal-only
+  const highlightedLenders = [];
   document.querySelectorAll(`[data-deal-id="${id}"] tr.sent[data-lender-key]`).forEach(tr => {
     const lk = tr.dataset.lenderKey;
     const lender = allLenders.find(l => l.key === lk);
-    if (lender && !lender.portal && lender.to) sentKeys.push(lender);
+    if (lender && !lender.portal && lender.to) highlightedLenders.push(lender);
   });
 
-  if (!sentKeys.length) { alert('No emailable lenders highlighted. Click lenders to highlight them yellow, then send.'); return; }
+  if (!highlightedLenders.length) { alert('No emailable lenders highlighted. Click lenders to highlight them yellow, then send.'); return; }
+
+  // Split into new vs already emailed
+  const newToSend = highlightedLenders.filter(l => !d.emailedLenders.includes(l.key));
+  const alreadyEmailed = highlightedLenders.filter(l => d.emailedLenders.includes(l.key));
+
+  if (!newToSend.length) { alert(`All ${alreadyEmailed.length} highlighted lenders have already been emailed for this deal. Use right-click → Force Re-send to re-send.`); return; }
 
   // Validate
   const ef = d.emailFields || {};
@@ -995,7 +1091,8 @@ async function sendToHighlighted(id) {
   const token = await ensureToken();
   if (!token) { alert('Please sign in with Microsoft before sending.'); return; }
 
-  if (!confirm(`Send ${sentKeys.length} emails from ${signedInUser.username}?`)) return;
+  const skipMsg = alreadyEmailed.length ? ` (skipping ${alreadyEmailed.length} already emailed)` : '';
+  if (!confirm(`Send ${newToSend.length} emails from ${signedInUser.username}?${skipMsg}`)) return;
 
   // Build email body
   const industry = d.fields?.industry || '';
@@ -1036,21 +1133,22 @@ async function sendToHighlighted(id) {
   let success = 0;
   const failed = [];
 
-  for (let i = 0; i < sentKeys.length; i++) {
-    const lender = sentKeys[i];
-    const percent = Math.round(((i+1)/sentKeys.length)*100);
+  for (let i = 0; i < newToSend.length; i++) {
+    const lender = newToSend[i];
+    const percent = Math.round(((i+1)/newToSend.length)*100);
     pf.style.width = percent + '%';
     pf.textContent = percent + '%';
-    pt.textContent = `Sending to ${lender.name}... (${i+1}/${sentKeys.length})`;
+    pt.textContent = `Sending to ${lender.name}... (${i+1}/${newToSend.length})`;
 
     const allCC = [...(lender.cc||[]), JASON_EMAIL, ...additionalCC];
 
     try {
       await sendOneEmail(lender.to, allCC, subject, body, attachments, token);
       success++;
+      // Track as emailed
+      if (!d.emailedLenders.includes(lender.key)) d.emailedLenders.push(lender.key);
     } catch(err) {
       console.error(`Failed ${lender.name}:`, err);
-      // Retry once on 429
       if (err.message && err.message.includes('429')) {
         pt.textContent = `Rate limited — retrying ${lender.name}...`;
         await sleep(3000);
@@ -1058,15 +1156,15 @@ async function sendToHighlighted(id) {
           const freshToken = await ensureToken();
           await sendOneEmail(lender.to, allCC, subject, body, attachments, freshToken || token);
           success++;
-        } catch(e2) {
-          failed.push(lender.name);
-        }
+          if (!d.emailedLenders.includes(lender.key)) d.emailedLenders.push(lender.key);
+        } catch(e2) { failed.push(lender.name); }
       } else if (err.message && err.message.includes('401')) {
         const freshToken = await ensureToken();
         if (freshToken) {
           try {
             await sendOneEmail(lender.to, allCC, subject, body, attachments, freshToken);
             success++;
+            if (!d.emailedLenders.includes(lender.key)) d.emailedLenders.push(lender.key);
           } catch(e3) { failed.push(lender.name); }
         } else { failed.push(lender.name); }
       } else {
@@ -1074,21 +1172,29 @@ async function sendToHighlighted(id) {
       }
     }
 
-    // 2 second delay between sends
-    if (i < sentKeys.length - 1) await sleep(2000);
+    if (i < newToSend.length - 1) await sleep(2000);
   }
+
+  // Save emailed lenders list
+  persist();
 
   // Results
   pt.textContent = 'Complete!';
   sendBtn.disabled = false;
 
   if (failed.length === 0) {
-    resultsDiv.innerHTML = `<div class="send-results success">All ${success} emails sent successfully!</div>`;
+    resultsDiv.innerHTML = `<div class="send-results success">All ${success} emails sent successfully!${skipMsg}</div>`;
   } else {
-    resultsDiv.innerHTML = `<div class="send-results partial">Sent ${success} of ${sentKeys.length} emails.<div class="failed-list">Failed: ${failed.join(', ')}</div></div>`;
+    resultsDiv.innerHTML = `<div class="send-results partial">Sent ${success} of ${newToSend.length} emails.${skipMsg}<div class="failed-list">Failed: ${failed.join(', ')}</div></div>`;
   }
 
-  setTimeout(() => { progressSection.style.display = 'none'; pf.style.width = '0%'; pf.textContent = '0%'; }, 3000);
+  // Re-render to show EMAILED badges
+  setTimeout(() => {
+    progressSection.style.display = 'none';
+    pf.style.width = '0%';
+    pf.textContent = '0%';
+    renderDealView(id);
+  }, 3000);
 }
 
 async function sendOneEmail(to, cc, subject, body, attachments, token) {
@@ -1128,11 +1234,109 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 function setLenderState(state) {
   if (!ctxTarget) return;
   const { tr, dealId } = ctxTarget;
+
+  if (state === 'approved') {
+    // Show approval popup instead of immediately setting
+    hideCtx();
+    showApprovalPopup(tr, dealId);
+    return;
+  }
+
   tr.classList.remove('sent','approved','declined');
   if (state) tr.classList.add(state);
+
+  // If clearing, also remove approval data
+  if (!state) {
+    const d = deals[dealId];
+    if (d && d.approvalData) delete d.approvalData[tr.dataset.lenderKey];
+  }
+
   saveDealFromDOM(dealId);
   renderSidebar();
   hideCtx();
+}
+
+function forceResend() {
+  if (!ctxTarget) return;
+  const { tr, dealId } = ctxTarget;
+  const lk = tr.dataset.lenderKey;
+  const d = deals[dealId];
+  if (d) {
+    // Remove from emailedLenders so it gets picked up on next send
+    d.emailedLenders = (d.emailedLenders || []).filter(k => k !== lk);
+    // Set back to sent state
+    tr.classList.remove('approved','declined');
+    tr.classList.add('sent');
+    saveDealFromDOM(dealId);
+    // Re-render to update badge
+    renderDealView(dealId);
+    toast('Lender marked for re-send');
+  }
+  hideCtx();
+}
+
+function showApprovalPopup(tr, dealId) {
+  const lk = tr.dataset.lenderKey;
+  const d = deals[dealId];
+  const existing = d?.approvalData?.[lk] || {};
+  // Find lender name
+  const allLendersFlat = [];
+  Object.entries(LENDERS).forEach(([risk, list]) => {
+    list.forEach((l, i) => { allLendersFlat.push({ ...l, key: `${risk}-${i}` }); });
+  });
+  const lender = allLendersFlat.find(l => l.key === lk);
+  const lenderName = lender ? lender.name : lk;
+  const bizName = d?.fields?.business || 'Untitled Deal';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'approval-overlay';
+  overlay.id = 'approval-overlay';
+  overlay.innerHTML = `<div class="approval-box">
+    <h3>${esc(lenderName)} — Approved</h3>
+    <div class="approval-sub">${esc(bizName)}</div>
+    <div class="approval-grid">
+      <div class="field"><label>Amount</label><input id="appr-amount" placeholder="$50,000" value="${esc(existing.amount||'')}"></div>
+      <div class="field"><label>Term</label><input id="appr-term" placeholder="6 months" value="${esc(existing.term||'')}"></div>
+      <div class="field"><label>Rate / Factor</label><input id="appr-rate" placeholder="1.35" value="${esc(existing.rate||'')}"></div>
+      <div class="field"><label>Payment</label><input id="appr-payment" placeholder="$2,250/day" value="${esc(existing.payment||'')}"></div>
+    </div>
+    <div class="approval-btns">
+      <button class="btn" onclick="cancelApproval()">Cancel</button>
+      <button class="btn btn-approve" onclick="saveApproval('${dealId}','${lk}')">Save Approval</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  document.getElementById('appr-amount').focus();
+  // Store ref to the TR
+  overlay._tr = tr;
+}
+
+function saveApproval(dealId, lk) {
+  const d = deals[dealId];
+  if (!d) return;
+  d.approvalData = d.approvalData || {};
+  d.approvalData[lk] = {
+    amount: document.getElementById('appr-amount').value.trim(),
+    term: document.getElementById('appr-term').value.trim(),
+    rate: document.getElementById('appr-rate').value.trim(),
+    payment: document.getElementById('appr-payment').value.trim()
+  };
+
+  // Set the lender state to approved
+  const overlay = document.getElementById('approval-overlay');
+  if (overlay && overlay._tr) {
+    overlay._tr.classList.remove('sent','declined');
+    overlay._tr.classList.add('approved');
+  }
+
+  cancelApproval();
+  saveDealFromDOM(dealId);
+  renderSidebar();
+}
+
+function cancelApproval() {
+  const overlay = document.getElementById('approval-overlay');
+  if (overlay) overlay.remove();
 }
 
 function hideCtx() { document.getElementById('ctx-menu').classList.remove('show'); ctxTarget = null; }
@@ -1178,6 +1382,46 @@ loadFromFirebase(() => {
   if (activeView !== 'dashboard' && deals[activeView]) renderDealView(activeView);
   else showDashboard();
 });
+
+// Real-time Firebase listener
+(function startFirebaseListener() {
+  if (!firebaseUrl) return;
+  const evtSource = new EventSource(firebaseUrl + '/.json?auth=');
+  // Use polling as fallback since Firebase REST SSE requires auth for streaming
+  setInterval(() => {
+    if (!firebaseUrl) return;
+    fetch(firebaseUrl + '/deals.json').then(r => r.json()).then(data => {
+      if (!data || typeof data !== 'object') return;
+      let changed = false;
+      // Check for new or updated deals from other users
+      Object.keys(data).forEach(k => {
+        const remote = JSON.stringify(data[k]);
+        const local = JSON.stringify(deals[k]);
+        if (remote !== local) { deals[k] = data[k]; changed = true; }
+      });
+      // Check for deleted deals
+      Object.keys(deals).forEach(k => {
+        if (!data[k]) { delete deals[k]; changed = true; }
+      });
+      if (changed) {
+        saveLocal();
+        renderRepTabs();
+        renderSidebar();
+        renderTabBar();
+        if (activeView === 'dashboard') renderDashboard();
+      }
+    }).catch(() => {});
+    // Also poll reps
+    fetch(firebaseUrl + '/reps.json').then(r => r.json()).then(data => {
+      if (Array.isArray(data) && JSON.stringify(data) !== JSON.stringify(reps)) {
+        reps = data;
+        saveLocal();
+        renderRepTabs();
+        if (activeView === 'dashboard') renderDashboard();
+      }
+    }).catch(() => {});
+  }, 5000); // Poll every 5 seconds
+})();
 </script>
 </body>
 </html>
