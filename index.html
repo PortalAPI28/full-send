@@ -6,52 +6,22 @@
 <title>Gotham Full Send</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #0a0c10;
-  --bg2: #0e1117;
-  --card: #151921;
-  --card-hover: #1a2030;
-  --border: #252d3a;
-  --border-focus: #58a6ff;
-  --text: #e6edf3;
-  --text-muted: #6e7681;
-  --accent: #58a6ff;
-  --accent-dim: rgba(88,166,255,0.10);
-  --green: #3fb950;
-  --green-dim: rgba(63,185,80,0.10);
-  --yellow: #d29922;
-  --yellow-dim: rgba(210,153,34,0.10);
-  --red: #f85149;
-  --red-dim: rgba(248,81,73,0.10);
-  --orange: #db6d28;
-  --purple: #a371f7;
-  --purple-dim: rgba(163,113,247,0.10);
-  --input-bg: #0d1117;
-  --radius: 6px;
-  --font: 'Outfit', sans-serif;
-  --mono: 'JetBrains Mono', monospace;
-}
+:root{--bg:#0a0c10;--bg2:#0e1117;--card:#151921;--card-hover:#1a2030;--border:#252d3a;--border-focus:#58a6ff;--text:#e6edf3;--text-muted:#6e7681;--accent:#58a6ff;--accent-dim:rgba(88,166,255,0.10);--green:#3fb950;--green-dim:rgba(63,185,80,0.10);--yellow:#d29922;--yellow-dim:rgba(210,153,34,0.10);--red:#f85149;--red-dim:rgba(248,81,73,0.10);--orange:#db6d28;--purple:#a371f7;--purple-dim:rgba(163,113,247,0.10);--input-bg:#0d1117;--radius:6px;--font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow:hidden;}
-
-/* ===== LAYOUT ===== */
 .app{display:flex;height:100vh;}
 
-/* --- Sidebar --- */
+/* Sidebar */
 .sidebar{width:260px;min-width:260px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
 .sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border);}
 .sidebar-logo{font-size:15px;font-weight:800;letter-spacing:-0.5px;display:flex;align-items:center;gap:8px;}
 .sidebar-logo span{color:var(--accent);}
-
-/* Auth section */
 .sidebar-auth{padding:10px 12px;border-bottom:1px solid var(--border);}
 .auth-btn{width:100%;font-family:var(--font);font-size:11px;font-weight:600;padding:8px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;transition:all 0.12s;display:flex;align-items:center;gap:6px;justify-content:center;}
 .auth-btn:hover{background:var(--card-hover);border-color:var(--text-muted);}
 .auth-btn.signed-in{border-color:var(--green);background:var(--green-dim);color:var(--green);cursor:default;}
 .auth-user{font-size:10px;color:var(--text-muted);text-align:center;margin-top:5px;font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-
 .sidebar-actions{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;gap:6px;}
-
 .btn{font-family:var(--font);font-size:12px;font-weight:600;padding:7px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;transition:all 0.12s;display:flex;align-items:center;gap:5px;white-space:nowrap;}
 .btn:hover{background:var(--card-hover);border-color:var(--text-muted);}
 .btn-primary{background:var(--accent);color:#fff;border-color:var(--accent);}
@@ -65,94 +35,86 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .btn-send{background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;border:none;font-size:14px;padding:12px 20px;border-radius:8px;cursor:pointer;transition:all 0.15s;font-weight:700;width:100%;justify-content:center;display:flex;align-items:center;gap:8px;}
 .btn-send:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 20px rgba(88,166,255,0.3);}
 .btn-send:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
-
 .deal-list{flex:1;overflow-y:auto;padding:6px 8px;}
 .deal-list::-webkit-scrollbar{width:4px;}
 .deal-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
 
-.deal-item{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:var(--radius);cursor:pointer;transition:all 0.1s;border:1px solid transparent;margin-bottom:2px;}
+/* Rep folder */
+.rep-folder{margin-bottom:2px;}
+.rep-folder-header{display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:var(--radius);cursor:pointer;transition:all 0.1s;color:var(--text-muted);font-size:12px;font-weight:600;}
+.rep-folder-header:hover{background:var(--card-hover);color:var(--text);}
+.rep-folder-header.active{color:var(--accent);}
+.rep-folder-header .rep-arrow{font-size:8px;transition:transform 0.15s;width:12px;text-align:center;}
+.rep-folder-header .rep-arrow.open{transform:rotate(90deg);}
+.rep-folder-header .rep-cnt{font-family:var(--mono);font-size:9px;background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:3px;margin-left:auto;}
+.rep-folder-deals{padding-left:12px;overflow:hidden;max-height:0;transition:max-height 0.2s ease-out;}
+.rep-folder-deals.open{max-height:2000px;}
+
+.deal-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--radius);cursor:pointer;transition:all 0.1s;border:1px solid transparent;margin-bottom:2px;}
 .deal-item:hover{background:var(--card-hover);}
 .deal-item.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);}
-.deal-item .deal-biz{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
-.deal-item .deal-date{font-size:10px;color:var(--text-muted);font-family:var(--mono);}
+.deal-item .deal-biz{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
+.deal-item .deal-date{font-size:9px;color:var(--text-muted);font-family:var(--mono);}
 .deal-item .deal-close{display:none;font-size:14px;color:var(--text-muted);padding:2px 4px;border-radius:3px;line-height:1;}
 .deal-item:hover .deal-close{display:block;}
 .deal-item .deal-close:hover{background:var(--red-dim);color:var(--red);}
-
-.deal-stats{display:flex;gap:6px;margin-top:3px;}
 .deal-pip{font-size:9px;font-family:var(--mono);font-weight:600;padding:1px 5px;border-radius:3px;}
 .pip-y{background:var(--yellow-dim);color:var(--yellow);}
 .pip-g{background:var(--green-dim);color:var(--green);}
+.pip-b{background:var(--accent-dim);color:var(--accent);}
 .pip-r{background:var(--red-dim);color:var(--red);}
-
 .sidebar-footer{padding:10px 12px;border-top:1px solid var(--border);font-size:10px;color:var(--text-muted);}
 
-/* --- Main Panel --- */
+/* Main Panel */
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-
 .tab-bar{display:flex;align-items:center;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 8px;min-height:38px;overflow-x:auto;gap:2px;}
 .tab-bar::-webkit-scrollbar{height:0;}
-.tab{display:flex;align-items:center;gap:6px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--text-muted);transition:all 0.12s;white-space:nowrap;}
-.tab:hover{color:var(--text);background:rgba(255,255,255,0.03);}
-.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
-.tab .tab-close{font-size:13px;margin-left:2px;padding:1px 3px;border-radius:3px;opacity:0;transition:opacity 0.1s;}
-.tab:hover .tab-close{opacity:1;}
-.tab .tab-close:hover{background:var(--red-dim);color:var(--red);}
-.tab-dash{padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text-muted);border-bottom:2px solid transparent;transition:all 0.12s;}
+.tab-dash{padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text-muted);border-bottom:2px solid transparent;transition:all 0.12s;white-space:nowrap;}
 .tab-dash:hover{color:var(--text);}
 .tab-dash.active{color:var(--accent);border-bottom-color:var(--accent);}
-
 .content{flex:1;overflow-y:auto;padding:24px;background:var(--bg);}
 .content::-webkit-scrollbar{width:6px;}
 .content::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
 
-/* ===== DASHBOARD ===== */
-.dash{max-width:900px;margin:0 auto;}
+/* Dashboard */
+.dash{max-width:960px;margin:0 auto;}
 .dash-hero{margin-bottom:32px;}
 .dash-hero h2{font-size:26px;font-weight:800;letter-spacing:-0.8px;margin-bottom:6px;}
 .dash-hero p{color:var(--text-muted);font-size:14px;}
-
-.stats-row{display:flex;gap:12px;margin-bottom:28px;}
-.stat-card{flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;}
-.stat-card .stat-val{font-size:28px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;}
-.stat-card .stat-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:2px;}
+.stats-row{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+.stat-card{flex:1;min-width:120px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;}
+.stat-card .stat-val{font-size:26px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;}
+.stat-card .stat-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:2px;}
 .stat-accent{color:var(--accent);}
 .stat-yellow{color:var(--yellow);}
 .stat-green{color:var(--green);}
 .stat-red{color:var(--red);}
-
 .dash-table{width:100%;border-collapse:collapse;}
 .dash-table th{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);}
 .dash-table td{padding:10px 12px;border-bottom:1px solid rgba(37,45,58,0.5);cursor:pointer;transition:background 0.1s;}
 .dash-table tr:hover td{background:rgba(88,166,255,0.04);}
 .dash-table .dt-biz{font-weight:600;font-size:13px;}
-.dash-table .dt-date{font-family:var(--mono);font-size:12px;color:var(--text-muted);}
-.dash-table .dt-state{font-family:var(--mono);font-size:12px;}
-
 .empty-state{text-align:center;padding:60px 20px;color:var(--text-muted);}
 .empty-state h3{font-size:18px;margin-bottom:8px;color:var(--text);}
+.month-selector{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
+.month-selector select{font-family:var(--font);font-size:13px;padding:7px 12px;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);outline:none;}
 
-/* ===== DEAL FORM ===== */
+/* Deal Form */
 .deal-view{max-width:1100px;margin:0 auto;}
 .deal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);}
 .deal-header h2{font-size:20px;font-weight:700;letter-spacing:-0.4px;}
 .deal-header-actions{display:flex;gap:8px;}
-
 .section{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 22px;margin-bottom:14px;}
 .section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);margin-bottom:14px;}
-
-/* Email section accent */
 .section-email{border-color:rgba(163,113,247,0.3);}
 .section-email .section-title{color:var(--purple);}
-
 .fields-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:10px;}
 .field label{display:block;font-size:10px;font-weight:600;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px;}
 .field input,.field select,.field textarea{width:100%;font-family:var(--mono);font-size:12px;padding:6px 9px;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);outline:none;transition:border-color 0.15s;}
-.field textarea{resize:vertical;min-height:60px;font-family:var(--mono);font-size:12px;}
+.field textarea{resize:vertical;min-height:60px;}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--border-focus);box-shadow:0 0 0 3px var(--accent-dim);}
 .field input::placeholder,.field textarea::placeholder{color:#3a414a;}
 .field-wide{grid-column:span 2;}
-
 .rev-table{width:100%;border-collapse:collapse;font-size:12px;}
 .rev-table th{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);text-align:left;padding:6px 8px;border-bottom:2px solid var(--border);}
 .rev-table td{padding:3px 4px;border-bottom:1px solid var(--border);}
@@ -161,7 +123,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .rev-table .row-label{width:34px;padding:3px 4px;}
 .rev-table .row-label input{width:28px;text-align:center;font-family:var(--mono);font-size:11px;padding:4px 2px;background:var(--input-bg);border:1px solid var(--border);border-radius:4px;color:var(--text-muted);outline:none;}
 .rev-table .row-label input:focus{border-color:var(--border-focus);box-shadow:0 0 0 2px var(--accent-dim);color:var(--text);}
-
 .inline-group{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
 .radio-group{display:flex;gap:4px;}
 .radio-group label{font-size:12px;font-weight:500;padding:4px 12px;border-radius:4px;cursor:pointer;border:1px solid var(--border);background:var(--input-bg);transition:all 0.12s;color:var(--text-muted);}
@@ -176,7 +137,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .file-item{display:flex;justify-content:space-between;align-items:center;background:var(--input-bg);padding:6px 10px;border-radius:6px;margin-top:6px;border:1px solid var(--border);}
 .file-item span{font-size:11px;font-family:var(--mono);color:var(--text);}
 .file-remove{background:var(--red-dim);color:var(--red);border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-weight:700;font-size:12px;}
-.file-remove:hover{background:rgba(248,81,73,0.25);}
 
 /* Lender table */
 .risk-header{font-size:12px;font-weight:700;padding:8px 10px;border-radius:var(--radius);margin:10px 0 4px 0;display:flex;align-items:center;gap:7px;}
@@ -187,80 +147,65 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .risk-low::before{background:var(--green);}
 .risk-mid::before{background:var(--yellow);}
 .risk-high::before{background:var(--red);}
-
 .lender-table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;}
 .lender-table th{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);text-align:left;padding:5px 8px;border-bottom:1px solid var(--border);}
 .lender-table td{padding:4px 8px;border-bottom:1px solid rgba(37,45,58,0.4);vertical-align:top;}
 .lender-table tr{cursor:pointer;transition:background 0.12s;user-select:none;}
 .lender-table tr:hover td{background:rgba(88,166,255,0.04);}
-
 .lender-table tr.sent td{background:var(--yellow-dim);}
 .lender-table tr.sent .lender-name{color:var(--yellow);}
 .lender-table tr.sent:hover td{background:rgba(210,153,34,0.16);}
-
-.lender-table tr.approved td{background:var(--green-dim);}
-.lender-table tr.approved .lender-name{color:var(--green);}
-.lender-table tr.approved:hover td{background:rgba(63,185,80,0.16);}
-
+.lender-table tr.approved td{background:var(--accent-dim);}
+.lender-table tr.approved .lender-name{color:var(--accent);}
+.lender-table tr.approved:hover td{background:rgba(88,166,255,0.16);}
 .lender-table tr.declined td{background:var(--red-dim);}
 .lender-table tr.declined .lender-name{color:var(--red);}
 .lender-table tr.declined:hover td{background:rgba(248,81,73,0.16);}
-
-.lender-table tr.funded td{background:var(--accent-dim);}
-.lender-table tr.funded .lender-name{color:var(--accent);}
-.lender-table tr.funded:hover td{background:rgba(88,166,255,0.16);}
-
+.lender-table tr.funded td{background:var(--green-dim);}
+.lender-table tr.funded .lender-name{color:var(--green);}
+.lender-table tr.funded:hover td{background:rgba(63,185,80,0.16);}
+.lender-table tr.omns td{background:var(--orange);background:rgba(219,109,40,0.10);}
+.lender-table tr.omns .lender-name{color:var(--orange);}
+.lender-table tr.omns:hover td{background:rgba(219,109,40,0.16);}
 .lender-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .lender-email{font-family:var(--mono);font-size:10px;color:var(--text-muted);word-break:break-all;}
 .lender-exempt{font-size:10px;color:var(--yellow);}
 .portal-badge{font-size:8px;font-family:var(--mono);background:var(--purple-dim);color:var(--purple);padding:1px 5px;border-radius:3px;margin-left:4px;font-weight:700;}
-
-.col-name{width:16%;}
-.col-email{width:35%;}
-.col-exempt{width:16%;}
-.col-status{width:33%;}
-
+.emailed-badge{font-size:7px;font-family:var(--mono);background:var(--accent-dim);color:var(--accent);padding:1px 4px;border-radius:3px;margin-left:4px;font-weight:700;}
+.col-name{width:16%;}.col-email{width:35%;}.col-exempt{width:16%;}.col-status{width:33%;}
 .lender-table .status-input{width:100%;font-family:var(--font);font-size:11px;padding:3px 7px;background:transparent;border:1px solid transparent;border-radius:4px;color:var(--text);outline:none;transition:all 0.12s;}
 .lender-table .status-input:hover{border-color:var(--border);background:var(--input-bg);}
 .lender-table .status-input:focus{border-color:var(--border-focus);background:var(--input-bg);box-shadow:0 0 0 2px var(--accent-dim);}
 
 /* Context menu */
-.ctx-menu{position:fixed;z-index:200;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,0.5);display:none;min-width:150px;animation:fadeIn 0.1s ease-out;}
+.ctx-menu{position:fixed;z-index:200;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,0.5);display:none;min-width:170px;animation:fadeIn 0.1s ease-out;}
 .ctx-menu.show{display:block;}
-.ctx-menu button{display:flex;align-items:center;gap:7px;width:100%;padding:7px 11px;border:none;background:transparent;color:var(--text);font-family:var(--font);font-size:12px;font-weight:500;cursor:pointer;border-radius:5px;transition:background 0.1s;}
+.ctx-menu button{display:flex;align-items:center;gap:8px;width:100%;padding:7px 11px;border:none;background:transparent;color:var(--text);font-family:var(--font);font-size:12px;font-weight:500;cursor:pointer;border-radius:5px;transition:background 0.1s;}
 .ctx-menu button:hover{background:rgba(255,255,255,0.06);}
-.ctx-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
-.ctx-dot-green{background:var(--green);}
-.ctx-dot-red{background:var(--red);}
-.ctx-dot-clear{background:var(--text-muted);}
-
-/* Toast */
-.toast{position:fixed;bottom:20px;right:20px;font-weight:600;font-size:12px;padding:8px 18px;border-radius:var(--radius);opacity:0;transform:translateY(10px);transition:all 0.25s;pointer-events:none;z-index:300;background:var(--green);color:#fff;}
-.toast.show{opacity:1;transform:translateY(0);}
-.toast.error{background:var(--red);}
-
-/* Legend */
-.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;padding:8px 0;}
-.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);}
-.legend-dot{width:10px;height:10px;border-radius:3px;}
-.ld-y{background:var(--yellow-dim);border:1px solid var(--yellow);}
-.ld-g{background:var(--green-dim);border:1px solid var(--green);}
-.ld-r{background:var(--red-dim);border:1px solid var(--red);}
-
-/* Sync indicator */
-.sync-indicator{display:flex;align-items:center;gap:4px;font-size:10px;font-family:var(--mono);color:var(--text-muted);}
-.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
-.sync-dot.offline{background:var(--red);}
-
-/* Rep tabs */
-.rep-tabs{padding:6px 8px 2px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:3px;}
-.rep-tab{font-family:var(--font);font-size:11px;font-weight:600;padding:5px 10px;border-radius:4px;border:1px solid transparent;background:transparent;color:var(--text-muted);cursor:pointer;transition:all 0.12s;white-space:nowrap;}
-.rep-tab:hover{background:rgba(255,255,255,0.04);color:var(--text);}
-.rep-tab.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);}
-.rep-tab .rep-count{font-family:var(--mono);font-size:9px;background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:3px;margin-left:3px;}
-.rep-tab.active .rep-count{background:rgba(88,166,255,0.2);}
+.ctx-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;}
+.ctx-ico{width:14px;height:14px;flex-shrink:0;}
 
 /* Overlays */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);animation:fadeIn 0.15s ease-out;}
+.overlay-box{background:var(--card);border-radius:14px;padding:24px;max-width:420px;width:90%;animation:fadeIn 0.15s ease-out;}
+.overlay-box h3{font-size:15px;font-weight:700;margin-bottom:2px;}
+.overlay-box .overlay-sub{font-size:11px;color:var(--text-muted);margin-bottom:16px;}
+.overlay-box .overlay-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.overlay-box .overlay-grid .field label{font-size:10px;}
+.overlay-box .overlay-grid .field input,.overlay-box .overlay-grid .field textarea{font-size:13px;padding:7px 9px;}
+.overlay-box .overlay-full{margin-bottom:16px;}
+.overlay-box .overlay-full .field label{font-size:10px;}
+.overlay-box .overlay-full .field input,.overlay-box .overlay-full .field textarea{font-size:13px;padding:7px 9px;}
+.overlay-btns{display:flex;gap:8px;justify-content:flex-end;}
+.overlay-btns .btn{padding:8px 16px;}
+.btn-approve-action{background:var(--accent-dim);color:var(--accent);border-color:var(--accent);}
+.btn-approve-action:hover{background:rgba(88,166,255,0.2);}
+.btn-funded-action{background:var(--green-dim);color:var(--green);border-color:var(--green);}
+.btn-funded-action:hover{background:rgba(63,185,80,0.2);}
+.btn-omns-action{background:rgba(219,109,40,0.10);color:var(--orange);border-color:var(--orange);}
+.btn-omns-action:hover{background:rgba(219,109,40,0.2);}
+
+/* Reps overlay */
 .reps-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
 .reps-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:420px;width:90%;}
 .reps-box h3{font-size:16px;font-weight:700;margin-bottom:14px;}
@@ -270,64 +215,41 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .rep-row .btn{padding:3px 8px;font-size:10px;}
 .add-rep-row{display:flex;gap:6px;margin-top:10px;}
 .add-rep-row input{flex:1;font-family:var(--font);font-size:13px;padding:7px 10px;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);outline:none;}
-.add-rep-row input:focus{border-color:var(--border-focus);}
 
-/* Progress bar */
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;font-weight:600;font-size:12px;padding:8px 18px;border-radius:var(--radius);opacity:0;transform:translateY(10px);transition:all 0.25s;pointer-events:none;z-index:300;background:var(--green);color:#fff;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.error{background:var(--red);}
+
+/* Legend */
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;padding:8px 0;}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text-muted);}
+.legend-dot{width:10px;height:10px;border-radius:3px;}
+.ld-y{background:var(--yellow-dim);border:1px solid var(--yellow);}
+.ld-b{background:var(--accent-dim);border:1px solid var(--accent);}
+.ld-r{background:var(--red-dim);border:1px solid var(--red);}
+.ld-g{background:var(--green-dim);border:1px solid var(--green);}
+.ld-o{background:rgba(219,109,40,0.10);border:1px solid var(--orange);}
+
+/* Progress */
 .progress-section{margin-top:14px;display:none;}
 .progress-bar{width:100%;height:24px;background:var(--input-bg);border-radius:12px;overflow:hidden;border:1px solid var(--border);}
 .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--purple));width:0%;transition:width 0.3s;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:11px;font-family:var(--mono);}
 .progress-text{text-align:center;color:var(--text-muted);font-size:11px;font-weight:600;margin-top:6px;}
-
-/* Send results */
 .send-results{margin-top:12px;padding:12px;border-radius:8px;font-size:11px;font-family:var(--mono);}
 .send-results.success{background:var(--green-dim);color:var(--green);border:1px solid rgba(63,185,80,0.2);}
 .send-results.partial{background:var(--yellow-dim);color:var(--yellow);border:1px solid rgba(210,153,34,0.2);}
 .send-results .failed-list{margin-top:6px;color:var(--red);}
 
-/* Approval overlay */
-.approval-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);animation:fadeIn 0.15s ease-out;}
-.approval-box{background:var(--card);border:1px solid var(--green);border-radius:14px;padding:24px;max-width:400px;width:90%;animation:fadeIn 0.15s ease-out;}
-.approval-box h3{font-size:15px;font-weight:700;color:var(--green);margin-bottom:2px;}
-.approval-box .approval-sub{font-size:11px;color:var(--text-muted);margin-bottom:16px;}
-.approval-box .approval-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
-.approval-box .approval-grid .field label{font-size:10px;}
-.approval-box .approval-grid .field input{font-size:13px;padding:7px 9px;}
-.approval-btns{display:flex;gap:8px;justify-content:flex-end;}
-.approval-btns .btn{padding:8px 16px;}
-.btn-approve{background:var(--green-dim);color:var(--green);border-color:var(--green);}
-.btn-approve:hover{background:rgba(63,185,80,0.2);}
-.btn-funded{background:var(--accent-dim);color:var(--accent);border-color:var(--accent);}
-.btn-funded:hover{background:rgba(88,166,255,0.2);}
-
-/* Funded overlay */
-.funded-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);animation:fadeIn 0.15s ease-out;}
-.funded-box{background:var(--card);border:1px solid var(--accent);border-radius:14px;padding:24px;max-width:400px;width:90%;animation:fadeIn 0.15s ease-out;}
-.funded-box h3{font-size:15px;font-weight:700;color:var(--accent);margin-bottom:2px;}
-.funded-box .funded-sub{font-size:11px;color:var(--text-muted);margin-bottom:16px;}
-.funded-box .funded-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
-.funded-box .funded-grid .field label{font-size:10px;}
-.funded-box .funded-grid .field input{font-size:13px;padding:7px 9px;}
-.funded-box .funded-full{margin-bottom:16px;}
-.funded-box .funded-full .field label{font-size:10px;}
-.funded-box .funded-full .field input{font-size:13px;padding:7px 9px;}
-
-/* Emailed indicator */
-.emailed-badge{font-size:7px;font-family:var(--mono);background:var(--accent-dim);color:var(--accent);padding:1px 4px;border-radius:3px;margin-left:4px;font-weight:700;}
-
-/* Force resend dot */
-.ctx-dot-blue{background:var(--accent);}
+/* Sync */
+.sync-indicator{display:flex;align-items:center;gap:4px;font-size:10px;font-family:var(--mono);color:var(--text-muted);}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+.sync-dot.offline{background:var(--red);}
 
 @keyframes fadeIn{from{opacity:0;transform:scale(0.96);}to{opacity:1;transform:scale(1);}}
 
-/* Responsive */
-@media(max-width:800px){
-  .sidebar{width:0;min-width:0;overflow:hidden;position:fixed;z-index:100;height:100vh;}
-  .sidebar.open{width:260px;min-width:260px;}
-  .col-email{display:none;}
-  .fields-grid{grid-template-columns:1fr 1fr;}
-}
+@media(max-width:800px){.sidebar{width:0;min-width:0;overflow:hidden;position:fixed;z-index:100;height:100vh;}.sidebar.open{width:260px;min-width:260px;}.col-email{display:none;}.fields-grid{grid-template-columns:1fr 1fr;}}
 
-/* Print */
 @media print{
   body{background:#fff;color:#000;overflow:visible;}
   .sidebar,.tab-bar,.deal-header-actions,.ctx-menu,.toast,.legend,.sync-indicator,.section-email,.btn-send,.progress-section,.send-results{display:none!important;}
@@ -336,1302 +258,348 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   .field input,.field textarea,.rev-table input,.status-input{border:none!important;background:none!important;box-shadow:none!important;color:#000!important;font-weight:600;}
   .risk-header{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .lender-table tr.sent td{background:#fff3cd!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  .lender-table tr.approved td{background:#d4edda!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .lender-table tr.approved td{background:#cce5ff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .lender-table tr.declined td{background:#f8d7da!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  .lender-table tr.funded td{background:#cce5ff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .lender-table tr.funded td{background:#d4edda!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .lender-table tr.omns td{background:#fde8cd!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 }
 </style>
 </head>
 <body>
 <div class="app">
-  <!-- SIDEBAR -->
   <div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-logo"><span>G</span> Gotham Full Send</div>
-    </div>
-    <div class="sidebar-auth" id="sidebar-auth">
-      <button class="auth-btn" id="auth-btn" onclick="authenticate()">Sign in with Microsoft</button>
-      <div class="auth-user" id="auth-user"></div>
-    </div>
-    <div class="sidebar-actions">
-      <button class="btn btn-primary btn-full" onclick="createDeal()">+ New Deal</button>
-    </div>
-    <div class="rep-tabs" id="rep-tabs"></div>
+    <div class="sidebar-header"><div class="sidebar-logo"><span>G</span> Gotham Full Send</div></div>
+    <div class="sidebar-auth"><button class="auth-btn" id="auth-btn" onclick="authenticate()">Sign in with Microsoft</button><div class="auth-user" id="auth-user"></div></div>
+    <div class="sidebar-actions"><button class="btn btn-primary btn-full" onclick="createDeal()">+ New Deal</button></div>
     <div class="deal-list" id="deal-list"></div>
     <div class="sidebar-footer">
       <div style="display:flex;align-items:center;justify-content:space-between;">
-        <div class="sync-indicator" id="sync-status">
-          <span class="sync-dot" id="sync-dot"></span>
-          <span id="sync-text">Local mode</span>
-        </div>
+        <div class="sync-indicator" id="sync-status"><span class="sync-dot" id="sync-dot"></span><span id="sync-text">Local mode</span></div>
         <button class="btn btn-ghost btn-sm" onclick="manageReps()" style="font-size:10px;">Manage Reps</button>
       </div>
     </div>
   </div>
-
-  <!-- MAIN -->
   <div class="main">
-    <div class="tab-bar" id="tab-bar">
-      <div class="tab-dash active" onclick="showDashboard()">Dashboard</div>
-      <div class="tab-dash" onclick="showFunded()">Funded</div>
-    </div>
+    <div class="tab-bar" id="tab-bar"></div>
     <div class="content" id="content"></div>
   </div>
 </div>
 
-<!-- Context Menu -->
 <div class="ctx-menu" id="ctx-menu">
-  <button onclick="setLenderState('approved')"><span class="ctx-dot ctx-dot-green"></span>Approved</button>
-  <button onclick="setLenderState('declined')"><span class="ctx-dot ctx-dot-red"></span>Declined</button>
-  <button onclick="setLenderState('funded')"><span class="ctx-dot ctx-dot-blue"></span>Funded</button>
-  <button onclick="forceResend()"><span class="ctx-dot ctx-dot-blue"></span>Force Re-send</button>
-  <button onclick="setLenderState('')"><span class="ctx-dot ctx-dot-clear"></span>Clear Status</button>
+  <button onclick="setLenderState('approved')"><span class="ctx-dot" style="background:var(--accent);">&#8203;</span>Approved</button>
+  <button onclick="setLenderState('declined')"><span class="ctx-dot" style="background:var(--red);">&#8203;</span>Declined</button>
+  <button onclick="setLenderState('funded')"><span class="ctx-dot" style="background:var(--green);color:#fff;font-size:9px;font-weight:700;">$</span>Funded</button>
+  <button onclick="setLenderState('omns')"><span class="ctx-dot" style="background:var(--orange);">&#8203;</span>OMNS</button>
+  <button onclick="forceResend()"><svg class="ctx-ico" viewBox="0 0 16 16" fill="none"><path d="M13.5 2.5h-3.5m3.5 0v3.5m0-3.5L9.35 6.65" stroke="var(--purple)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 9v3a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1h3" stroke="var(--purple)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Force Re-send</button>
+  <button onclick="setLenderState('')"><span class="ctx-dot" style="background:var(--text-muted);">&#8203;</span>Clear Status</button>
 </div>
 
 <div class="toast" id="toast"></div>
-
 <script src="https://alcdn.msauth.net/browser/2.14.2/js/msal-browser.min.js"></script>
 <script>
-/* ============================================================
-   LENDER DATA (Tracker list — preserved exactly)
-   ============================================================ */
-const LENDERS = {
-  "Low Risk": [
-    {name:"Idea Financial (App 1)",email:"*use portal to submit*",exempt:"",portal:true},
-    {name:"Rapid Finance / SBFS",email:"*use portal to submit*",exempt:"NO NJ",portal:true},
-    {name:"Headway*",email:"*use portal to submit*",exempt:"NO CA",portal:true},
-    {name:"On Deck",email:"*use portal to submit*",exempt:"",portal:true},
-    {name:"Fora Financial",email:"*use portal to submit*",exempt:"",portal:true},
-    {name:"Can Capital",email:"*use portal to submit*",exempt:"",portal:true},
-    {name:"Credibly (App 1)",email:"*use portal to submit*",exempt:"",portal:true},
-    {name:"Kapitus",email:"newcontracts@Kapitus.com",exempt:"",to:"newcontracts@Kapitus.com",cc:[]},
-    {name:"Altbanq",email:"nd@altbanq.com",exempt:"NO CA",to:"nd@altbanq.com",cc:[]},
-    {name:"Biz2Credit",email:"Lius.perez@biz2credit.com",exempt:"NO SOLE PROP",to:"lius.perez@biz2credit.com",cc:[]},
-    {name:"IOU*",email:"vsamii@ioufinancial.com",exempt:"NO CA, HI",to:"vsamii@ioufinancial.com",cc:[]},
-    {name:"Smart Step",email:"submissions@smartstepfunding.com cc sales@smartstepfunding.com",exempt:"",to:"submissions@smartstepfunding.com",cc:["sales@smartstepfunding.com"]},
-    {name:"Libertas",email:"mathias.grez@libertasfunding.com",exempt:"",to:"mathias.grez@libertasfunding.com",cc:[]},
-    {name:"Kalamata",email:"deals@kalamatacapitalgroup.com cc amy.erlich@kalamatacapitalgroup.com",exempt:"",to:"deals@kalamatacapitalgroup.com",cc:["amy.erlich@kalamatacapitalgroup.com"]},
-    {name:"Newport Capital",email:"submissions@newportbc.com cc kborth@newportbc.com",exempt:"NO TX ONLY CC SPLITS",to:"submissions@newportbc.com",cc:["kborth@newportbc.com"]},
-    {name:"Greenbox",email:"submissions@greenboxcapital.com",exempt:"NO TX",to:"submissions@greenboxcapital.com",cc:[]},
-  ],
-  "Mid Risk": [
-    {name:"Fundworks",email:"newdeals@thefundworks.com cc jlee@thefundworks.com",exempt:"",to:"newdeals@thefundworks.com",cc:["jlee@thefundworks.com"]},
-    {name:"Vox Funding",email:"submissions@voxfunding.com cc wdorsey@voxfunding.com",exempt:"",to:"submissions@voxfunding.com",cc:["wdorsey@voxfunding.com"]},
-    {name:"Bizfund",email:"leor@bizfund.com",exempt:"",to:"leor@bizfund.com",cc:[]},
-    {name:"Fundkite",email:"submissions@fundkite.com cc victoria.t@fundkite.com",exempt:"",to:"submissions@fundkite.com",cc:["victoria.t@fundkite.com"]},
-    {name:"Spartan",email:"kmcmahon@spartancapitalgroup.com cc funding@spartancapitalgroup.com",exempt:"",to:"kmcmahon@spartancapitalgroup.com",cc:["funding@spartancapitalgroup.com"]},
-    {name:"CFG",email:"jpsubs@cfgms.com cc jpascalino@cfgms.com",exempt:"",to:"jpsubs@cfgms.com",cc:["jpascalino@cfgms.com"]},
-    {name:"EBF",email:"newdeals@ev-bf.com cc xotchil.aleman@everestbusinessfunding.com",exempt:"",to:"newdeals@ev-bf.com",cc:["xotchil.aleman@everestbusinessfunding.com"]},
-    {name:"Bitty Advance",email:"*use portal to submit*",exempt:"",portal:true},
-    {name:"Reliance",email:"uw@reliancef.com cc klaudia@reliancef.com",exempt:"",to:"uw@reliancef.com",cc:["klaudia@reliancef.com"]},
-    {name:"NewCo",email:"submissions@newcocapitalgroup.com cc gabriel@newcocapitalgroup.com",exempt:"",to:"submissions@newcocapitalgroup.com",cc:["gabriel@newcocapitalgroup.com"]},
-    {name:"Capital Domain",email:"Deals@capitaldomain.com",exempt:"",to:"deals@capitaldomain.com",cc:[]},
-    {name:"Velocity",email:"subs@velocitycg.com cc jesse@velocitycg.com",exempt:"",to:"subs@velocitycg.com",cc:["jesse@velocitycg.com"]},
-    {name:"Rowan Advance",email:"deals@rowanadvance.com cc eli@rowanadvance.com",exempt:"",to:"deals@rowanadvance.com",cc:["eli@rowanadvance.com"]},
-    {name:"Fintap",email:"submissions@fintap.com cc asilverstein@fintap.com",exempt:"NO VA, MO",to:"submissions@fintap.com",cc:["asilverstein@fintap.com"]},
-    {name:"1Fundr",email:"submissions@1fundr.com cc kyle@1fundr.com",exempt:"NO VA",to:"submissions@1fundr.com",cc:["kyle@1fundr.com"]},
-    {name:"Vital Cap",email:"submissions@vitalcapfund.com cc jaime@vitalcapfund.com",exempt:"NO UT",to:"submissions@vitalcapfund.com",cc:["jaime@vitalcapfund.com"]},
-    {name:"Merit BF*",email:"submissions@meritbf.com cc jstrelzik@meritbf.com",exempt:"NO CA or SOLE PROP",to:"submissions@meritbf.com",cc:["jstrelzik@meritbf.com"]},
-    {name:"Amsterdam*",email:"submissions@acgroupinc.com cc mhench@acgroupinc.com",exempt:"NO UT, CA, TX 1ST",to:"submissions@acgroupinc.com",cc:["mhench@acgroupinc.com"]},
-    {name:"Wall Funding",email:"iso@wallfunding.com",exempt:"NO TX",to:"iso@wallfunding.com",cc:[]},
-    {name:"Simply Funding",email:"submissions@simplyfunding.com cc ryanc@simplyfunding.com",exempt:"NO TX, HI, AK",to:"submissions@simplyfunding.com",cc:["ryanc@simplyfunding.com"]},
-    {name:"Fyncap",email:"submissions@fyncap.com cc sam@fyncap.com",exempt:"NO TX",to:"submissions@fyncap.com",cc:["sam@fyncap.com"]},
-    {name:"Madison Advance",email:"newdeals@madisonadvance.com cc ezzy@madisonadvance.com",exempt:"NO TX, CT",to:"newdeals@madisonadvance.com",cc:["ezzy@madisonadvance.com"]},
-    {name:"Cobalt Funding",email:"deals@cobaltfunding.com cc jbok@cobaltfunding.com",exempt:"NO TX",to:"deals@cobaltfunding.com",cc:["jbok@cobaltfunding.com"]},
-    {name:"Lifetime",email:"nate@lifetimefundingllc.com cc newdeals@lifetimefundingllc.com",exempt:"NO TX",to:"nate@lifetimefundingllc.com",cc:["newdeals@lifetimefundingllc.com"]},
-    {name:"Blackbridge",email:"subs@bbigm.com",exempt:"NO TX",to:"subs@bbigm.com",cc:[]},
-    {name:"EFinancial Tree",email:"submissions@efinancialtree.com cc craig@efinancialtree.com",exempt:"NO TX, UT",to:"submissions@efinancialtree.com",cc:["craig@efinancialtree.com"]},
-    {name:"Retro Advance*",email:"newdeals@retroadv.com cc a.fava@retroadv.com",exempt:"NO TX, CA",to:"newdeals@retroadv.com",cc:["a.fava@retroadv.com"]},
-    {name:"Purple Tree*",email:"submissions@purpletreefunding.com cc kayla@purpletreefunding.com",exempt:"NO CA, TX",to:"submissions@purpletreefunding.com",cc:["kayla@purpletreefunding.com"]},
-    {name:"Capybara*",email:"deals@capybarausa.com cc doug@capybarausa.com cc Lbreno@capybarausa.com",exempt:"NO CA, UT",to:"deals@capybarausa.com",cc:["doug@capybarausa.com","Lbreno@capybarausa.com"]},
-    {name:"Smarter Merchant*",email:"submissions@thesmartermerchant.com cc joseph@thesmartermerchant.com",exempt:"NO CA, TX",to:"submissions@thesmartermerchant.com",cc:["joseph@thesmartermerchant.com"]},
-    {name:"Alt Funding*",email:"uw@altfunding.com",exempt:"NO CA, TX",to:"uw@altfunding.com",cc:[]},
-    {name:"QFS Capital***",email:"submissions@qfscapital.com cc josh@qfscapital.com",exempt:"",to:"submissions@qfscapital.com",cc:["josh@qfscapital.com"]},
-    {name:"GFE***",email:"underwriting@globalfundingexperts.com cc lior@globalfundingexperts.com",exempt:"",to:"underwriting@globalfundingexperts.com",cc:["lior@globalfundingexperts.com"]},
-    {name:"Nexi***",email:"submissions@gonexi.com cc angie@gonexi.com",exempt:"",to:"submissions@gonexi.com",cc:["angie@gonexi.com"]},
-    {name:"Silverline***",email:"submissions@silverlinefunding.com cc chaya@silverlinefunding.com",exempt:"NO TX",to:"submissions@silverlinefunding.com",cc:["chaya@silverlinefunding.com"]},
-    {name:"Highland Hill***",email:"tristan@highlandhillcap.com cc submissions@highlandhillcap.com",exempt:"NO TX",to:"tristan@highlandhillcap.com",cc:["submissions@highlandhillcap.com"]},
-  ],
-  "High Risk": [
-    {name:"Merchant First",email:"uw@merchantfirst.net cc bmontesano@merchantfirst.net",exempt:"NO TX",to:"uw@merchantfirst.net",cc:["bmontesano@merchantfirst.net"]},
-    {name:"Dependence",email:"uw@dependancep.com cc klaudia@reliancef.com",exempt:"",to:"uw@dependancep.com",cc:["klaudia@reliancef.com"]},
-    {name:"Trofeo Capital",email:"nick@trofeocap.com cc anthony@trofeocap.com cc erika@trofeocap.com",exempt:"NO TX",to:"nick@trofeocap.com",cc:["anthony@trofeocap.com","erika@trofeocap.com"]},
-    {name:"Ocean Capital",email:"submissions@ocean-funding.com cc steven@ocean-funding.com",exempt:"NO TX",to:"submissions@ocean-funding.com",cc:["steven@ocean-funding.com"]},
-    {name:"Emmy Capital",email:"john@emmycapitalgroup.com cc processing@emmycapitalgroup.com cc uw@emmycapitalgroup.com cc william@emmycapitalgroup.com",exempt:"NO TX",to:"john@emmycapitalgroup.com",cc:["processing@emmycapitalgroup.com","uw@emmycapitalgroup.com","william@emmycapitalgroup.com"]},
-    {name:"Lite Fund / Clear Fund",email:"aron@litefund.co cc deals@litefund.co cc frank@litefund.co",exempt:"NO TX",to:"aron@litefund.co",cc:["deals@litefund.co","frank@litefund.co"]},
-    {name:"Alo Capital Group",email:"uw@alocapitalgroup.com",exempt:"NO TX",to:"uw@alocapitalgroup.com",cc:[]},
-    {name:"Cromwell Capital",email:"submissions@cromwellcapital.com cc ryan@cromwellcapital.com",exempt:"NO NY, TX OVER $100K",to:"submissions@cromwellcapital.com",cc:["ryan@cromwellcapital.com"]},
-    {name:"Epic Advance",email:"subs@epic-advance.com",exempt:"NO TX",to:"subs@epic-advance.com",cc:[]},
-    {name:"M&D Capital NY",email:"jeremy@mdcapitalny.com cc subs@mdcapitalny.com",exempt:"NO TX",to:"jeremy@mdcapitalny.com",cc:["subs@mdcapitalny.com"]},
-    {name:"Seamless",email:"subs@seamlesscapitalgroup.com cc dov@seamlesscapitalgroup.com",exempt:"NO TX",to:"subs@seamlesscapitalgroup.com",cc:["dov@seamlesscapitalgroup.com"]},
-    {name:"Diverse",email:"ronen@diversecapitalllc.com cc shannon@kash-advance.com",exempt:"NO TX",to:"ronen@diversecapitalllc.com",cc:["shannon@kash-advance.com"]},
-    {name:"Prime",email:"uw@primecapitalpartners.org cc anthony@primecapitalpartners.org cc nico@primecapitalpartners.org",exempt:"NO TX",to:"uw@primecapitalpartners.org",cc:["anthony@primecapitalpartners.org","nico@primecapitalpartners.org"]},
-    {name:"Family Funding",email:"miki@familyfundinggroup.com",exempt:"NO TX",to:"miki@familyfundinggroup.com",cc:[]},
-    {name:"Unify",email:"subs@unifyfg.com",exempt:"NO TX, CA",to:"subs@unifyfg.com",cc:[]},
-  ]
-};
-const RISK_CLASS = {"Low Risk":"risk-low","Mid Risk":"risk-mid","High Risk":"risk-high"};
-const JASON_EMAIL = 'jason@gothamcapitalfunding.com';
+const LENDERS={"Low Risk":[{name:"Idea Financial (App 1)",email:"*use portal to submit*",exempt:"",portal:true},{name:"Rapid Finance / SBFS",email:"*use portal to submit*",exempt:"NO NJ",portal:true},{name:"Headway*",email:"*use portal to submit*",exempt:"NO CA",portal:true},{name:"On Deck",email:"*use portal to submit*",exempt:"",portal:true},{name:"Fora Financial",email:"*use portal to submit*",exempt:"",portal:true},{name:"Can Capital",email:"*use portal to submit*",exempt:"",portal:true},{name:"Credibly (App 1)",email:"*use portal to submit*",exempt:"",portal:true},{name:"Kapitus",email:"newcontracts@Kapitus.com",exempt:"",to:"newcontracts@Kapitus.com",cc:[]},{name:"Altbanq",email:"nd@altbanq.com",exempt:"NO CA",to:"nd@altbanq.com",cc:[]},{name:"Biz2Credit",email:"Lius.perez@biz2credit.com",exempt:"NO SOLE PROP",to:"lius.perez@biz2credit.com",cc:[]},{name:"IOU*",email:"vsamii@ioufinancial.com",exempt:"NO CA, HI",to:"vsamii@ioufinancial.com",cc:[]},{name:"Smart Step",email:"submissions@smartstepfunding.com cc sales@smartstepfunding.com",exempt:"",to:"submissions@smartstepfunding.com",cc:["sales@smartstepfunding.com"]},{name:"Libertas",email:"mathias.grez@libertasfunding.com",exempt:"",to:"mathias.grez@libertasfunding.com",cc:[]},{name:"Kalamata",email:"deals@kalamatacapitalgroup.com cc amy.erlich@kalamatacapitalgroup.com",exempt:"",to:"deals@kalamatacapitalgroup.com",cc:["amy.erlich@kalamatacapitalgroup.com"]},{name:"Newport Capital",email:"submissions@newportbc.com cc kborth@newportbc.com",exempt:"NO TX ONLY CC SPLITS",to:"submissions@newportbc.com",cc:["kborth@newportbc.com"]},{name:"Greenbox",email:"submissions@greenboxcapital.com",exempt:"NO TX",to:"submissions@greenboxcapital.com",cc:[]}],"Mid Risk":[{name:"Fundworks",email:"newdeals@thefundworks.com cc jlee@thefundworks.com",exempt:"",to:"newdeals@thefundworks.com",cc:["jlee@thefundworks.com"]},{name:"Vox Funding",email:"submissions@voxfunding.com cc wdorsey@voxfunding.com",exempt:"",to:"submissions@voxfunding.com",cc:["wdorsey@voxfunding.com"]},{name:"Bizfund",email:"leor@bizfund.com",exempt:"",to:"leor@bizfund.com",cc:[]},{name:"Fundkite",email:"submissions@fundkite.com cc victoria.t@fundkite.com",exempt:"",to:"submissions@fundkite.com",cc:["victoria.t@fundkite.com"]},{name:"Spartan",email:"kmcmahon@spartancapitalgroup.com cc funding@spartancapitalgroup.com",exempt:"",to:"kmcmahon@spartancapitalgroup.com",cc:["funding@spartancapitalgroup.com"]},{name:"CFG",email:"jpsubs@cfgms.com cc jpascalino@cfgms.com",exempt:"",to:"jpsubs@cfgms.com",cc:["jpascalino@cfgms.com"]},{name:"EBF",email:"newdeals@ev-bf.com cc xotchil.aleman@everestbusinessfunding.com",exempt:"",to:"newdeals@ev-bf.com",cc:["xotchil.aleman@everestbusinessfunding.com"]},{name:"Bitty Advance",email:"*use portal to submit*",exempt:"",portal:true},{name:"Reliance",email:"uw@reliancef.com cc klaudia@reliancef.com",exempt:"",to:"uw@reliancef.com",cc:["klaudia@reliancef.com"]},{name:"NewCo",email:"submissions@newcocapitalgroup.com cc gabriel@newcocapitalgroup.com",exempt:"",to:"submissions@newcocapitalgroup.com",cc:["gabriel@newcocapitalgroup.com"]},{name:"Capital Domain",email:"Deals@capitaldomain.com",exempt:"",to:"deals@capitaldomain.com",cc:[]},{name:"Velocity",email:"subs@velocitycg.com cc jesse@velocitycg.com",exempt:"",to:"subs@velocitycg.com",cc:["jesse@velocitycg.com"]},{name:"Rowan Advance",email:"deals@rowanadvance.com cc eli@rowanadvance.com",exempt:"",to:"deals@rowanadvance.com",cc:["eli@rowanadvance.com"]},{name:"Fintap",email:"submissions@fintap.com cc asilverstein@fintap.com",exempt:"NO VA, MO",to:"submissions@fintap.com",cc:["asilverstein@fintap.com"]},{name:"1Fundr",email:"submissions@1fundr.com cc kyle@1fundr.com",exempt:"NO VA",to:"submissions@1fundr.com",cc:["kyle@1fundr.com"]},{name:"Vital Cap",email:"submissions@vitalcapfund.com cc jaime@vitalcapfund.com",exempt:"NO UT",to:"submissions@vitalcapfund.com",cc:["jaime@vitalcapfund.com"]},{name:"Merit BF*",email:"submissions@meritbf.com cc jstrelzik@meritbf.com",exempt:"NO CA or SOLE PROP",to:"submissions@meritbf.com",cc:["jstrelzik@meritbf.com"]},{name:"Amsterdam*",email:"submissions@acgroupinc.com cc mhench@acgroupinc.com",exempt:"NO UT, CA, TX 1ST",to:"submissions@acgroupinc.com",cc:["mhench@acgroupinc.com"]},{name:"Wall Funding",email:"iso@wallfunding.com",exempt:"NO TX",to:"iso@wallfunding.com",cc:[]},{name:"Simply Funding",email:"submissions@simplyfunding.com cc ryanc@simplyfunding.com",exempt:"NO TX, HI, AK",to:"submissions@simplyfunding.com",cc:["ryanc@simplyfunding.com"]},{name:"Fyncap",email:"submissions@fyncap.com cc sam@fyncap.com",exempt:"NO TX",to:"submissions@fyncap.com",cc:["sam@fyncap.com"]},{name:"Madison Advance",email:"newdeals@madisonadvance.com cc ezzy@madisonadvance.com",exempt:"NO TX, CT",to:"newdeals@madisonadvance.com",cc:["ezzy@madisonadvance.com"]},{name:"Cobalt Funding",email:"deals@cobaltfunding.com cc jbok@cobaltfunding.com",exempt:"NO TX",to:"deals@cobaltfunding.com",cc:["jbok@cobaltfunding.com"]},{name:"Lifetime",email:"nate@lifetimefundingllc.com cc newdeals@lifetimefundingllc.com",exempt:"NO TX",to:"nate@lifetimefundingllc.com",cc:["newdeals@lifetimefundingllc.com"]},{name:"Blackbridge",email:"subs@bbigm.com",exempt:"NO TX",to:"subs@bbigm.com",cc:[]},{name:"EFinancial Tree",email:"submissions@efinancialtree.com cc craig@efinancialtree.com",exempt:"NO TX, UT",to:"submissions@efinancialtree.com",cc:["craig@efinancialtree.com"]},{name:"Retro Advance*",email:"newdeals@retroadv.com cc a.fava@retroadv.com",exempt:"NO TX, CA",to:"newdeals@retroadv.com",cc:["a.fava@retroadv.com"]},{name:"Purple Tree*",email:"submissions@purpletreefunding.com cc kayla@purpletreefunding.com",exempt:"NO CA, TX",to:"submissions@purpletreefunding.com",cc:["kayla@purpletreefunding.com"]},{name:"Capybara*",email:"deals@capybarausa.com cc doug@capybarausa.com cc Lbreno@capybarausa.com",exempt:"NO CA, UT",to:"deals@capybarausa.com",cc:["doug@capybarausa.com","Lbreno@capybarausa.com"]},{name:"Smarter Merchant*",email:"submissions@thesmartermerchant.com cc joseph@thesmartermerchant.com",exempt:"NO CA, TX",to:"submissions@thesmartermerchant.com",cc:["joseph@thesmartermerchant.com"]},{name:"Alt Funding*",email:"uw@altfunding.com",exempt:"NO CA, TX",to:"uw@altfunding.com",cc:[]},{name:"QFS Capital***",email:"submissions@qfscapital.com cc josh@qfscapital.com",exempt:"",to:"submissions@qfscapital.com",cc:["josh@qfscapital.com"]},{name:"GFE***",email:"underwriting@globalfundingexperts.com cc lior@globalfundingexperts.com",exempt:"",to:"underwriting@globalfundingexperts.com",cc:["lior@globalfundingexperts.com"]},{name:"Nexi***",email:"submissions@gonexi.com cc angie@gonexi.com",exempt:"",to:"submissions@gonexi.com",cc:["angie@gonexi.com"]},{name:"Silverline***",email:"submissions@silverlinefunding.com cc chaya@silverlinefunding.com",exempt:"NO TX",to:"submissions@silverlinefunding.com",cc:["chaya@silverlinefunding.com"]},{name:"Highland Hill***",email:"tristan@highlandhillcap.com cc submissions@highlandhillcap.com",exempt:"NO TX",to:"tristan@highlandhillcap.com",cc:["submissions@highlandhillcap.com"]}],"High Risk":[{name:"Merchant First",email:"uw@merchantfirst.net cc bmontesano@merchantfirst.net",exempt:"NO TX",to:"uw@merchantfirst.net",cc:["bmontesano@merchantfirst.net"]},{name:"Dependence",email:"uw@dependancep.com cc klaudia@reliancef.com",exempt:"",to:"uw@dependancep.com",cc:["klaudia@reliancef.com"]},{name:"Trofeo Capital",email:"nick@trofeocap.com cc anthony@trofeocap.com cc erika@trofeocap.com",exempt:"NO TX",to:"nick@trofeocap.com",cc:["anthony@trofeocap.com","erika@trofeocap.com"]},{name:"Ocean Capital",email:"submissions@ocean-funding.com cc steven@ocean-funding.com",exempt:"NO TX",to:"submissions@ocean-funding.com",cc:["steven@ocean-funding.com"]},{name:"Emmy Capital",email:"john@emmycapitalgroup.com cc processing@emmycapitalgroup.com cc uw@emmycapitalgroup.com cc william@emmycapitalgroup.com",exempt:"NO TX",to:"john@emmycapitalgroup.com",cc:["processing@emmycapitalgroup.com","uw@emmycapitalgroup.com","william@emmycapitalgroup.com"]},{name:"Lite Fund / Clear Fund",email:"aron@litefund.co cc deals@litefund.co cc frank@litefund.co",exempt:"NO TX",to:"aron@litefund.co",cc:["deals@litefund.co","frank@litefund.co"]},{name:"Alo Capital Group",email:"uw@alocapitalgroup.com",exempt:"NO TX",to:"uw@alocapitalgroup.com",cc:[]},{name:"Cromwell Capital",email:"submissions@cromwellcapital.com cc ryan@cromwellcapital.com",exempt:"NO NY, TX OVER $100K",to:"submissions@cromwellcapital.com",cc:["ryan@cromwellcapital.com"]},{name:"Epic Advance",email:"subs@epic-advance.com",exempt:"NO TX",to:"subs@epic-advance.com",cc:[]},{name:"M&D Capital NY",email:"jeremy@mdcapitalny.com cc subs@mdcapitalny.com",exempt:"NO TX",to:"jeremy@mdcapitalny.com",cc:["subs@mdcapitalny.com"]},{name:"Seamless",email:"subs@seamlesscapitalgroup.com cc dov@seamlesscapitalgroup.com",exempt:"NO TX",to:"subs@seamlesscapitalgroup.com",cc:["dov@seamlesscapitalgroup.com"]},{name:"Diverse",email:"ronen@diversecapitalllc.com cc shannon@kash-advance.com",exempt:"NO TX",to:"ronen@diversecapitalllc.com",cc:["shannon@kash-advance.com"]},{name:"Prime",email:"uw@primecapitalpartners.org cc anthony@primecapitalpartners.org cc nico@primecapitalpartners.org",exempt:"NO TX",to:"uw@primecapitalpartners.org",cc:["anthony@primecapitalpartners.org","nico@primecapitalpartners.org"]},{name:"Family Funding",email:"miki@familyfundinggroup.com",exempt:"NO TX",to:"miki@familyfundinggroup.com",cc:[]},{name:"Unify",email:"subs@unifyfg.com",exempt:"NO TX, CA",to:"subs@unifyfg.com",cc:[]}]};
+const RISK_CLASS={"Low Risk":"risk-low","Mid Risk":"risk-mid","High Risk":"risk-high"};
+const JASON_EMAIL='jason@gothamcapitalfunding.com';
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-/* ============================================================
-   MSAL CONFIG
-   ============================================================ */
-const msalConfig = {
-  auth: {
-    clientId: '7fdbb596-abb9-44a3-92df-dee7afb70632',
-    authority: 'https://login.microsoftonline.com/ec4a3ddf-5ebc-44ad-904a-3eed2baff0e3',
-    redirectUri: window.location.origin + window.location.pathname
-  }
-};
-const msalInstance = new msal.PublicClientApplication(msalConfig);
+const msalConfig={auth:{clientId:'7fdbb596-abb9-44a3-92df-dee7afb70632',authority:'https://login.microsoftonline.com/ec4a3ddf-5ebc-44ad-904a-3eed2baff0e3',redirectUri:window.location.origin+window.location.pathname}};
+const msalInstance=new msal.PublicClientApplication(msalConfig);
 
-/* ============================================================
-   STATE
-   ============================================================ */
-let deals = {};
-let reps = [];
-let selectedRep = null;
-let activeView = 'dashboard'; // 'dashboard', 'funded', or dealId
-let firebaseUrl = 'https://submissions-tracker-db9ac-default-rtdb.firebaseio.com';
-let ctxTarget = null;
-let accessToken = null;
-let signedInUser = null;
-let dealFiles = {}; // {dealId: [File, ...]}
+let deals={},reps=[],selectedRep=null,activeView='dashboard',firebaseUrl='https://submissions-tracker-db9ac-default-rtdb.firebaseio.com',ctxTarget=null,accessToken=null,signedInUser=null,dealFiles={},recentlyDeleted=new Set(),expandedReps={},selectedMonth=null;
 
-/* ============================================================
-   STORAGE
-   ============================================================ */
-const LS_KEY = 'gotham_deals';
-const LS_TABS = 'gotham_active_view';
-const LS_REPS = 'gotham_reps';
+const LS_KEY='gotham_deals',LS_VIEW='gotham_active_view',LS_REPS='gotham_reps';
+function loadLocal(){try{const r=localStorage.getItem(LS_KEY);if(r)deals=JSON.parse(r);const v=localStorage.getItem(LS_VIEW);if(v)activeView=v;const rr=localStorage.getItem(LS_REPS);if(rr)reps=JSON.parse(rr);}catch(e){}}
+function saveLocal(){try{localStorage.setItem(LS_KEY,JSON.stringify(deals));localStorage.setItem(LS_VIEW,activeView);localStorage.setItem(LS_REPS,JSON.stringify(reps));}catch(e){}}
 
-function loadLocal() {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (raw) deals = JSON.parse(raw);
-    const av = localStorage.getItem(LS_TABS);
-    if (av) activeView = av;
-    const r = localStorage.getItem(LS_REPS);
-    if (r) reps = JSON.parse(r);
-  } catch(e) {}
-}
+function saveToFirebase(){if(!firebaseUrl)return;fetch(firebaseUrl+'/deals.json',{method:'PATCH',body:JSON.stringify(deals),headers:{'Content-Type':'application/json'}}).then(()=>setSyncStatus(true)).catch(()=>setSyncStatus(false));fetch(firebaseUrl+'/reps.json',{method:'PUT',body:JSON.stringify(reps),headers:{'Content-Type':'application/json'}}).catch(()=>{});}
 
-function saveLocal() {
-  try {
-    localStorage.setItem(LS_KEY, JSON.stringify(deals));
-    localStorage.setItem(LS_TABS, activeView);
-    localStorage.setItem(LS_REPS, JSON.stringify(reps));
-  } catch(e) {}
-}
+function deleteDealFromFirebase(id){if(!firebaseUrl)return;return fetch(firebaseUrl+'/deals/'+id+'.json',{method:'DELETE'});}
 
-function saveToFirebase() {
-  if (!firebaseUrl) return;
-  fetch(firebaseUrl + '/deals.json', { method: 'PATCH', body: JSON.stringify(deals), headers: {'Content-Type': 'application/json'} })
-    .then(() => setSyncStatus(true)).catch(() => setSyncStatus(false));
-  fetch(firebaseUrl + '/reps.json', { method: 'PUT', body: JSON.stringify(reps), headers: {'Content-Type': 'application/json'} }).catch(() => {});
-}
+function loadFromFirebase(cb){if(!firebaseUrl){cb();return;}Promise.all([fetch(firebaseUrl+'/deals.json').then(r=>r.json()),fetch(firebaseUrl+'/reps.json').then(r=>r.json())]).then(([dd,rr])=>{if(dd&&typeof dd==='object'){const lo={};Object.keys(deals).forEach(k=>{if(!dd[k])lo[k]=deals[k];});deals=Object.assign({},dd,lo);}if(Array.isArray(rr)&&rr.length)reps=rr;setSyncStatus(true);saveLocal();cb();}).catch(()=>{setSyncStatus(false);cb();});}
 
-function deleteDealFromFirebase(id) {
-  if (!firebaseUrl) return;
-  fetch(firebaseUrl + '/deals/' + id + '.json', { method: 'DELETE' }).catch(() => {});
-}
+function persist(){saveLocal();saveToFirebase();}
+function setSyncStatus(on){const d=document.getElementById('sync-dot'),t=document.getElementById('sync-text');if(!firebaseUrl){t.textContent='Local mode';d.className='sync-dot offline';return;}d.className=on?'sync-dot':'sync-dot offline';t.textContent=on?'Synced':'Offline';}
 
-function loadFromFirebase(cb) {
-  if (!firebaseUrl) { cb(); return; }
-  Promise.all([
-    fetch(firebaseUrl + '/deals.json').then(r => r.json()),
-    fetch(firebaseUrl + '/reps.json').then(r => r.json())
-  ]).then(([dealsData, repsData]) => {
-    if (dealsData && typeof dealsData === 'object') {
-      const localOnly = {};
-      Object.keys(deals).forEach(k => { if (!dealsData[k]) localOnly[k] = deals[k]; });
-      deals = Object.assign({}, dealsData, localOnly);
-    }
-    if (Array.isArray(repsData) && repsData.length) reps = repsData;
-    setSyncStatus(true);
-    saveLocal();
-    cb();
-  }).catch(() => { setSyncStatus(false); cb(); });
-}
+// Auth
+async function authenticate(){const btn=document.getElementById('auth-btn'),u=document.getElementById('auth-user');btn.textContent='Signing in...';try{const r=await msalInstance.loginPopup({scopes:['Mail.Send','User.Read'],prompt:'select_account'});const email=r.account.username.toLowerCase();if(!email.endsWith('@gothamcapitalfunding.com')){btn.textContent='Sign in with Microsoft';u.textContent='Not authorized';accessToken=null;alert('Access Denied: Only @gothamcapitalfunding.com emails are authorized.');return;}accessToken=r.accessToken;signedInUser=r.account;btn.textContent='● Signed In';btn.classList.add('signed-in');u.textContent=email;}catch(e){btn.textContent='Sign in with Microsoft';u.textContent='Sign-in failed';}}
+async function ensureToken(){if(!signedInUser)return null;try{const r=await msalInstance.acquireTokenSilent({scopes:['Mail.Send','User.Read'],account:signedInUser});accessToken=r.accessToken;return accessToken;}catch(e){try{const r=await msalInstance.acquireTokenPopup({scopes:['Mail.Send','User.Read']});accessToken=r.accessToken;return accessToken;}catch(e2){return null;}}}
+(function(){const accts=msalInstance.getAllAccounts();if(accts.length){signedInUser=accts[0];const em=signedInUser.username.toLowerCase();if(em.endsWith('@gothamcapitalfunding.com')){document.getElementById('auth-btn').textContent='● Signed In';document.getElementById('auth-btn').classList.add('signed-in');document.getElementById('auth-user').textContent=em;msalInstance.acquireTokenSilent({scopes:['Mail.Send','User.Read'],account:signedInUser}).then(r=>{accessToken=r.accessToken;}).catch(()=>{});}}})();
 
-function persist() { saveLocal(); saveToFirebase(); }
+// Helpers
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function toast(msg,isErr){const t=document.getElementById('toast');t.textContent=msg;t.className=isErr?'toast error show':'toast show';setTimeout(()=>t.classList.remove('show'),3000);}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function getAllLendersFlat(){const a=[];Object.entries(LENDERS).forEach(([risk,list])=>{list.forEach((l,i)=>{a.push({...l,key:`${risk}-${i}`});});});return a;}
 
-function setSyncStatus(online) {
-  const dot = document.getElementById('sync-dot');
-  const txt = document.getElementById('sync-text');
-  if (!firebaseUrl) { txt.textContent = 'Local mode'; dot.className = 'sync-dot offline'; return; }
-  dot.className = online ? 'sync-dot' : 'sync-dot offline';
-  txt.textContent = online ? 'Synced' : 'Offline';
-}
+// Deal helpers
+function newDealData(){const id='deal_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);return{id,rep:'',fields:{},courts:'',rev:{},lenders:{},lenderStates:{},emailFields:{},emailedLenders:[],approvalData:{},fundedData:{},omnsData:{},created:new Date().toISOString()};}
+function getDealLabel(d){return d.fields?.business||'Untitled Deal';}
+function isDealActive(d){if(!d.lenderStates)return true;const states=Object.values(d.lenderStates);return!states.some(v=>v==='funded'||v==='omns');}
+function isDealFunded(d){return d.lenderStates&&Object.values(d.lenderStates).some(v=>v==='funded');}
+function isDealOMNS(d){return!isDealFunded(d)&&d.lenderStates&&Object.values(d.lenderStates).some(v=>v==='omns');}
+function getDealPips(d){let s=0,a=0,dec=0,f=0,o=0;if(d.lenderStates)Object.values(d.lenderStates).forEach(v=>{if(v==='sent')s++;if(v==='approved')a++;if(v==='declined')dec++;if(v==='funded')f++;if(v==='omns')o++;});return{sent:s,approved:a,declined:dec,funded:f,omns:o};}
+function getActiveDeals(){return Object.values(deals).filter(isDealActive).sort((a,b)=>b.created.localeCompare(a.created));}
+function getFundedDeals(){return Object.values(deals).filter(isDealFunded).sort((a,b)=>b.created.localeCompare(a.created));}
+function getOMNSDeals(){return Object.values(deals).filter(isDealOMNS).sort((a,b)=>b.created.localeCompare(a.created));}
+function getDealMonth(d){const dt=d.fields?.date;if(!dt)return null;const parts=dt.split('-');return parts.length>=2?parseInt(parts[1])-1:null;}
+function getDealYear(d){const dt=d.fields?.date;if(!dt)return null;const parts=dt.split('-');return parts.length>=1?parseInt(parts[0]):null;}
 
-/* ============================================================
-   MICROSOFT AUTH
-   ============================================================ */
-async function authenticate() {
-  const btn = document.getElementById('auth-btn');
-  const userEl = document.getElementById('auth-user');
-  btn.textContent = 'Signing in...';
-  try {
-    const resp = await msalInstance.loginPopup({ scopes: ['Mail.Send','User.Read'], prompt: 'select_account' });
-    const email = resp.account.username.toLowerCase();
-    if (!email.endsWith('@gothamcapitalfunding.com')) {
-      btn.textContent = 'Sign in with Microsoft';
-      userEl.textContent = 'Not authorized';
-      accessToken = null;
-      alert('Access Denied: Only @gothamcapitalfunding.com emails are authorized.');
-      return;
-    }
-    accessToken = resp.accessToken;
-    signedInUser = resp.account;
-    sessionStorage.setItem('msalToken', accessToken);
-    btn.textContent = '● Signed In';
-    btn.classList.add('signed-in');
-    userEl.textContent = email;
-  } catch(e) {
-    console.error('Auth error:', e);
-    btn.textContent = 'Sign in with Microsoft';
-    userEl.textContent = 'Sign-in failed';
-  }
-}
+// CRUD
+function createDeal(){const d=newDealData();deals[d.id]=d;activeView=d.id;persist();renderAll();}
+function deleteDeal(id){if(!confirm('Delete this deal permanently?'))return;recentlyDeleted.add(id);delete deals[id];delete dealFiles[id];if(activeView===id)activeView='dashboard';saveLocal();deleteDealFromFirebase(id).then(()=>{toast('Deal deleted');}).catch(()=>{toast('Delete failed',true);});renderAll();}
 
-async function ensureToken() {
-  if (!signedInUser) return null;
-  try {
-    const resp = await msalInstance.acquireTokenSilent({ scopes: ['Mail.Send','User.Read'], account: signedInUser });
-    accessToken = resp.accessToken;
-    return accessToken;
-  } catch(e) {
-    try {
-      const resp = await msalInstance.acquireTokenPopup({ scopes: ['Mail.Send','User.Read'] });
-      accessToken = resp.accessToken;
-      return accessToken;
-    } catch(e2) {
-      console.error('Token refresh failed:', e2);
-      return null;
-    }
-  }
-}
+// Tab bar
+function renderTabBar(){document.getElementById('tab-bar').innerHTML=['dashboard','funded','omns','monthly'].map(v=>{const labels={dashboard:'Dashboard',funded:'Funded',omns:'OMNS',monthly:'Monthly'};return`<div class="tab-dash${activeView===v?' active':''}" onclick="showView('${v}')">${labels[v]}</div>`;}).join('');}
 
-// Restore session
-(function() {
-  const accounts = msalInstance.getAllAccounts();
-  if (accounts.length) {
-    signedInUser = accounts[0];
-    const email = signedInUser.username.toLowerCase();
-    if (email.endsWith('@gothamcapitalfunding.com')) {
-      document.getElementById('auth-btn').textContent = '● Signed In';
-      document.getElementById('auth-btn').classList.add('signed-in');
-      document.getElementById('auth-user').textContent = email;
-      msalInstance.acquireTokenSilent({ scopes: ['Mail.Send','User.Read'], account: signedInUser })
-        .then(r => { accessToken = r.accessToken; })
-        .catch(() => {});
-    }
-  }
-})();
+function showView(v){if(activeView!=='dashboard'&&activeView!=='funded'&&activeView!=='omns'&&activeView!=='monthly'&&deals[activeView])saveDealFromDOM(activeView);activeView=v;saveLocal();renderAll();if(v==='dashboard')renderDashboard();else if(v==='funded')renderFundedView();else if(v==='omns')renderOMNSView();else if(v==='monthly')renderMonthlyView();}
+function openDeal(id){if(activeView!=='dashboard'&&activeView!=='funded'&&activeView!=='omns'&&activeView!=='monthly'&&deals[activeView])saveDealFromDOM(activeView);activeView=id;saveLocal();renderTabBar();renderSidebar();renderDealView(id);}
 
-/* ============================================================
-   DEAL CRUD
-   ============================================================ */
-function newDealData() {
-  const id = 'deal_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
-  return { id, rep: '', fields: {}, courts: '', rev: {}, lenders: {}, lenderStates: {}, emailFields: {}, emailedLenders: [], approvalData: {}, fundedData: {}, created: new Date().toISOString() };
-}
-
-function createDeal() {
-  const d = newDealData();
-  deals[d.id] = d;
-  openTab(d.id);
-  persist();
-  renderSidebar();
-}
-
-function deleteDeal(id) {
-  if (!confirm('Delete this deal permanently?')) return;
-  delete deals[id];
-  delete dealFiles[id];
-  openTabs = openTabs.filter(t => t !== id);
-  if (activeView === id) showDashboard();
-  saveLocal();
-  deleteDealFromFirebase(id);
-  renderSidebar();
-  renderTabBar();
-}
-
-function getDealLabel(d) { return d.fields?.business || 'Untitled Deal'; }
-
-function isDealFunded(d) {
-  if (!d.lenderStates) return false;
-  return Object.values(d.lenderStates).some(v => v === 'funded');
-}
-
-function getDealPips(d) {
-  let s=0,a=0,dec=0,f=0;
-  if (d.lenderStates) Object.values(d.lenderStates).forEach(v => { if(v==='sent')s++; if(v==='approved')a++; if(v==='declined')dec++; if(v==='funded')f++; });
-  return {sent:s,approved:a,declined:dec,funded:f};
-}
-
-/* ============================================================
-   UI — Rep Tabs
-   ============================================================ */
-function renderRepTabs() {
-  const container = document.getElementById('rep-tabs');
-  const allCount = Object.keys(deals).length;
-  let html = `<button class="rep-tab${selectedRep===null?' active':''}" onclick="selectRep(null)">All<span class="rep-count">${allCount}</span></button>`;
-  reps.forEach(r => {
-    const count = Object.values(deals).filter(d => d.rep === r).length;
-    html += `<button class="rep-tab${selectedRep===r?' active':''}" onclick="selectRep('${esc(r)}')">${esc(r)}<span class="rep-count">${count}</span></button>`;
+// Sidebar with collapsible rep folders
+function renderSidebar(){
+  const list=document.getElementById('deal-list');
+  const active=getActiveDeals();
+  const byRep={};
+  reps.forEach(r=>{byRep[r]=[];});
+  byRep['__unassigned__']=[];
+  active.forEach(d=>{const r=d.rep||'__unassigned__';if(!byRep[r])byRep[r]=[];byRep[r].push(d);});
+  // Filter by selectedRep
+  let html='';
+  // "All" button
+  html+=`<div class="rep-folder-header${!selectedRep?' active':''}" onclick="selectRep(null)" style="margin-bottom:4px;"><span style="font-size:11px;">All</span><span class="rep-cnt">${active.length}</span></div>`;
+  // Rep folders
+  reps.forEach(r=>{
+    const rd=byRep[r]||[];
+    const isOpen=expandedReps[r];
+    const isSelected=selectedRep===r;
+    html+=`<div class="rep-folder">`;
+    html+=`<div class="rep-folder-header${isSelected?' active':''}" onclick="toggleRep('${esc(r)}')"><span class="rep-arrow${isOpen?' open':''}">▶</span><span>${esc(r)}</span><span class="rep-cnt">${rd.length}</span></div>`;
+    html+=`<div class="rep-folder-deals${isOpen?' open':''}">`;
+    rd.forEach(d=>{html+=dealItemHTML(d);});
+    html+=`</div></div>`;
   });
-  const unassigned = Object.values(deals).filter(d => !d.rep).length;
-  if (unassigned && reps.length) html += `<button class="rep-tab${selectedRep==='__unassigned__'?' active':''}" onclick="selectRep('__unassigned__')">Unassigned<span class="rep-count">${unassigned}</span></button>`;
-  container.innerHTML = html;
-}
-
-function selectRep(rep) { selectedRep = rep; renderRepTabs(); renderSidebar(); if (activeView==='dashboard') renderDashboard(); }
-
-function getFilteredDeals() {
-  let list = Object.values(deals).filter(d => !isDealFunded(d)); // exclude funded from active
-  if (selectedRep==='__unassigned__') list = list.filter(d => !d.rep);
-  else if (selectedRep) list = list.filter(d => d.rep === selectedRep);
-  return list.sort((a,b) => b.created.localeCompare(a.created));
-}
-
-function getFundedDeals() {
-  return Object.values(deals).filter(d => isDealFunded(d)).sort((a,b) => b.created.localeCompare(a.created));
-}
-
-/* ============================================================
-   UI — Sidebar
-   ============================================================ */
-function renderSidebar() {
-  const list = document.getElementById('deal-list');
-  const sorted = getFilteredDeals();
-  const funded = getFundedDeals();
-
-  let html = '';
-
-  if (!sorted.length && !funded.length) {
-    list.innerHTML = '<div class="empty-state" style="padding:30px 10px;"><p style="font-size:12px;">No deals yet</p></div>';
-    return;
+  // Unassigned
+  const un=byRep['__unassigned__']||[];
+  if(un.length){
+    const isOpen=expandedReps['__unassigned__'];
+    html+=`<div class="rep-folder"><div class="rep-folder-header" onclick="toggleRep('__unassigned__')"><span class="rep-arrow${isOpen?' open':''}">▶</span><span style="color:var(--text-muted);">Unassigned</span><span class="rep-cnt">${un.length}</span></div><div class="rep-folder-deals${isOpen?' open':''}">`;
+    un.forEach(d=>{html+=dealItemHTML(d);});
+    html+=`</div></div>`;
   }
+  list.innerHTML=html||'<div class="empty-state" style="padding:30px 10px;"><p style="font-size:12px;">No active deals</p></div>';
+}
+function dealItemHTML(d){
+  const pips=getDealPips(d);const isActive=activeView===d.id;
+  return`<div class="deal-item${isActive?' active':''}" onclick="openDeal('${d.id}')"><div style="flex:1;overflow:hidden;"><div class="deal-biz">${esc(getDealLabel(d))}</div><div style="display:flex;align-items:center;gap:6px;margin-top:2px;"><span style="font-size:9px;color:var(--text-muted);font-family:var(--mono);">${d.fields?.date||''}</span>${pips.sent?`<span class="deal-pip pip-y">${pips.sent}</span>`:''}${pips.approved?`<span class="deal-pip pip-b">${pips.approved}</span>`:''}${pips.declined?`<span class="deal-pip pip-r">${pips.declined}</span>`:''}</div></div><span class="deal-close" onclick="event.stopPropagation();deleteDeal('${d.id}')">&times;</span></div>`;
+}
+function toggleRep(r){expandedReps[r]=!expandedReps[r];renderSidebar();}
+function selectRep(r){selectedRep=r;renderSidebar();if(['dashboard','funded','omns','monthly'].includes(activeView)){renderTabBar();if(activeView==='dashboard')renderDashboard();else if(activeView==='funded')renderFundedView();else if(activeView==='omns')renderOMNSView();else if(activeView==='monthly')renderMonthlyView();}}
 
-  // Active deals
-  html += sorted.map(d => {
-    const pips = getDealPips(d);
-    const isActive = activeView === d.id;
-    return `<div class="deal-item${isActive?' active':''}" onclick="openTab('${d.id}')">
-      <div style="flex:1;overflow:hidden;">
-        <div class="deal-biz">${esc(getDealLabel(d))}</div>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:2px;">
-          <span class="deal-date">${d.fields?.date||'—'}</span>
-          ${d.rep?`<span style="font-size:10px;color:var(--accent);font-weight:600;">${esc(d.rep)}</span>`:''}
-          <span class="deal-stats">
-            ${pips.sent?`<span class="deal-pip pip-y">${pips.sent}</span>`:''}
-            ${pips.approved?`<span class="deal-pip pip-g">${pips.approved}</span>`:''}
-            ${pips.declined?`<span class="deal-pip pip-r">${pips.declined}</span>`:''}
-          </span>
-        </div>
-      </div>
-      <span class="deal-close" onclick="event.stopPropagation();deleteDeal('${d.id}')">&times;</span>
-    </div>`;
-  }).join('');
+function renderAll(){renderTabBar();renderSidebar();const v=activeView;if(v==='dashboard')renderDashboard();else if(v==='funded')renderFundedView();else if(v==='omns')renderOMNSView();else if(v==='monthly')renderMonthlyView();else if(deals[v])renderDealView(v);else{activeView='dashboard';renderTabBar();renderDashboard();}}
 
-  // Funded deals
-  if (funded.length) {
-    html += `<div style="padding:8px 4px 4px;margin-top:6px;border-top:1px solid var(--border);"><span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);">Funded</span></div>`;
-    html += funded.map(d => {
-      const pips = getDealPips(d);
-      const isActive = activeView === d.id;
-      return `<div class="deal-item${isActive?' active':''}" onclick="openTab('${d.id}')" style="opacity:0.7;">
-        <div style="flex:1;overflow:hidden;">
-          <div class="deal-biz" style="color:var(--accent);">${esc(getDealLabel(d))}</div>
-          <div style="display:flex;align-items:center;gap:8px;margin-top:2px;">
-            <span class="deal-date">${d.fields?.date||'—'}</span>
-            ${d.rep?`<span style="font-size:10px;color:var(--accent);font-weight:600;">${esc(d.rep)}</span>`:''}
-            <span class="deal-pip" style="background:var(--accent-dim);color:var(--accent);">${pips.funded}F</span>
-          </div>
-        </div>
-        <span class="deal-close" onclick="event.stopPropagation();deleteDeal('${d.id}')">&times;</span>
-      </div>`;
-    }).join('');
+// Dashboard
+function renderDashboard(){
+  const c=document.getElementById('content');
+  let ad=getActiveDeals();
+  if(selectedRep==='__unassigned__')ad=ad.filter(d=>!d.rep);
+  else if(selectedRep)ad=ad.filter(d=>d.rep===selectedRep);
+  let ts=0,ta=0,td2=0;ad.forEach(d=>{const p=getDealPips(d);ts+=p.sent;ta+=p.approved;td2+=p.declined;});
+  let repHtml='';
+  if(reps.length){
+    const allActive=getActiveDeals();
+    const rows=reps.map(r=>{const rd=allActive.filter(d=>d.rep===r);let rs=0,ra=0,rdd=0;rd.forEach(d=>{const p=getDealPips(d);rs+=p.sent;ra+=p.approved;rdd+=p.declined;});return`<tr><td style="font-weight:600;font-size:13px;cursor:pointer;" onclick="selectRep('${esc(r)}')">${esc(r)}</td><td><span class="deal-pip" style="background:var(--accent-dim);color:var(--accent);">${rd.length}</span></td><td><span class="deal-pip pip-y">${rs}</span></td><td><span class="deal-pip pip-b">${ra}</span></td><td><span class="deal-pip pip-r">${rdd}</span></td></tr>`;}).join('');
+    repHtml=`<div class="section" style="margin-bottom:20px;"><div class="section-title">Rep Performance</div><table class="dash-table"><thead><tr><th>Rep</th><th>Deals</th><th>Sent</th><th>Approved</th><th>Declined</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   }
-
-  list.innerHTML = html;
-}
-
-/* ============================================================
-   UI — Tab Bar
-   ============================================================ */
-function renderTabBar() {
-  const bar = document.getElementById('tab-bar');
-  bar.innerHTML = `<div class="tab-dash${activeView==='dashboard'?' active':''}" onclick="showDashboard()">Dashboard</div>` +
-    `<div class="tab-dash${activeView==='funded'?' active':''}" onclick="showFunded()">Funded</div>`;
-}
-
-function openTab(id) { activeView=id; saveLocal(); renderSidebar(); renderTabBar(); renderDealView(id); }
-function switchTab(id) { activeView=id; saveLocal(); renderSidebar(); renderTabBar(); renderDealView(id); }
-function showDashboard() { if(activeView!=='dashboard'&&activeView!=='funded'&&deals[activeView])saveDealFromDOM(activeView); activeView='dashboard'; saveLocal(); renderRepTabs(); renderSidebar(); renderTabBar(); renderDashboard(); }
-function showFunded() { if(activeView!=='dashboard'&&activeView!=='funded'&&deals[activeView])saveDealFromDOM(activeView); activeView='funded'; saveLocal(); renderSidebar(); renderTabBar(); renderFundedView(); }
-
-/* ============================================================
-   UI — Dashboard
-   ============================================================ */
-function renderDashboard() {
-  const c = document.getElementById('content');
-  const activeDeals = Object.values(deals).filter(d => !isDealFunded(d)).sort((a,b) => b.created.localeCompare(a.created));
-  let totalSent=0,totalApproved=0,totalDeclined=0;
-  activeDeals.forEach(d => { const p=getDealPips(d); totalSent+=p.sent; totalApproved+=p.approved; totalDeclined+=p.declined; });
-
-  // Rep performance (active deals only)
-  let repStatsHtml = '';
-  if (reps.length) {
-    const repRows = reps.map(r => {
-      const rd = activeDeals.filter(d => d.rep===r); let rs=0,ra=0,rdd=0;
-      rd.forEach(d => { const p=getDealPips(d); rs+=p.sent; ra+=p.approved; rdd+=p.declined; });
-      return `<tr><td style="font-weight:600;font-size:13px;cursor:pointer;" onclick="selectRep('${esc(r)}')">${esc(r)}</td><td><span class="deal-pip" style="background:var(--accent-dim);color:var(--accent);">${rd.length}</span></td><td><span class="deal-pip pip-y">${rs}</span></td><td><span class="deal-pip pip-g">${ra}</span></td><td><span class="deal-pip pip-r">${rdd}</span></td></tr>`;
-    }).join('');
-    const unDeals = activeDeals.filter(d => !d.rep); let us=0,ua=0,ud=0;
-    unDeals.forEach(d => { const p=getDealPips(d); us+=p.sent; ua+=p.approved; ud+=p.declined; });
-    const unRow = unDeals.length ? `<tr style="color:var(--text-muted);"><td style="font-size:13px;cursor:pointer;" onclick="selectRep('__unassigned__')">Unassigned</td><td><span class="deal-pip" style="background:rgba(255,255,255,0.05);color:var(--text-muted);">${unDeals.length}</span></td><td><span class="deal-pip pip-y">${us}</span></td><td><span class="deal-pip pip-g">${ua}</span></td><td><span class="deal-pip pip-r">${ud}</span></td></tr>` : '';
-    repStatsHtml = `<div class="section" style="margin-bottom:20px;"><div class="section-title">Rep Performance</div><table class="dash-table"><thead><tr><th>Rep</th><th>Deals</th><th>Sent</th><th>Approved</th><th>Declined</th></tr></thead><tbody>${repRows}${unRow}</tbody></table></div>`;
+  // Approvals
+  const lf=getAllLendersFlat();const approvals=[];
+  ad.forEach(d=>{if(!d.lenderStates||!d.approvalData)return;Object.entries(d.lenderStates).forEach(([lk,st])=>{if(st==='approved'&&d.approvalData[lk]){const a=d.approvalData[lk];const l=lf.find(x=>x.key===lk);approvals.push({biz:d.fields?.business||'—',ln:l?l.name:lk,amt:a.amount||'',term:a.term||'',rate:a.rate||'',pay:a.payment||'',rep:d.rep||'—',did:d.id});}});});
+  let appHtml='';
+  if(approvals.length){
+    let tot=0;approvals.forEach(a=>{const n=parseFloat((a.amt||'').replace(/[^0-9.]/g,''));if(!isNaN(n))tot+=n;});
+    appHtml=`<div class="section" style="margin-bottom:20px;"><div class="section-title">Approval Details</div><table class="dash-table"><thead><tr><th>Business</th><th>Lender</th><th>Amount</th><th>Term</th><th>Rate</th><th>Payment</th><th>Rep</th></tr></thead><tbody>${approvals.map(a=>`<tr onclick="openDeal('${a.did}')"><td class="dt-biz">${esc(a.biz)}</td><td style="font-size:12px;">${esc(a.ln)}</td><td style="font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:600;">${esc(a.amt)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(a.term)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(a.rate)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(a.pay)}</td><td style="font-size:12px;color:var(--accent);">${esc(a.rep)}</td></tr>`).join('')}</tbody></table></div>`;
   }
-
-  // Gather all approvals with data
-  const approvals = [];
-  const allLendersFlat = [];
-  Object.entries(LENDERS).forEach(([risk, list]) => {
-    list.forEach((l, i) => { allLendersFlat.push({ ...l, key: `${risk}-${i}` }); });
-  });
-
-  activeDeals.forEach(d => {
-    if (!d.lenderStates || !d.approvalData) return;
-    Object.entries(d.lenderStates).forEach(([lk, state]) => {
-      if (state === 'approved' && d.approvalData[lk]) {
-        const ad = d.approvalData[lk];
-        const lender = allLendersFlat.find(l => l.key === lk);
-        approvals.push({
-          business: d.fields?.business || 'Untitled',
-          lenderName: lender ? lender.name : lk,
-          amount: ad.amount || '',
-          term: ad.term || '',
-          rate: ad.rate || '',
-          payment: ad.payment || '',
-          rep: d.rep || '—',
-          dealId: d.id
-        });
-      }
-    });
-  });
-
-  // Approval summary
-  let totalApprovedAmt = 0;
-  let rateSum = 0, rateCount = 0;
-  approvals.forEach(a => {
-    const num = parseFloat((a.amount||'').replace(/[^0-9.]/g,''));
-    if (!isNaN(num)) totalApprovedAmt += num;
-    const rate = parseFloat((a.rate||'').replace(/[^0-9.]/g,''));
-    if (!isNaN(rate)) { rateSum += rate; rateCount++; }
-  });
-  const avgRate = rateCount ? (rateSum / rateCount).toFixed(2) : '—';
-  const avgAmt = approvals.length ? Math.round(totalApprovedAmt / approvals.length).toLocaleString() : '—';
-
-  let approvalsHtml = '';
-  if (approvals.length) {
-    approvalsHtml = `
-    <div class="stats-row" style="margin-top:8px;">
-      <div class="stat-card"><div class="stat-val stat-green">$${Math.round(totalApprovedAmt).toLocaleString()}</div><div class="stat-label">Total Approved</div></div>
-      <div class="stat-card"><div class="stat-val" style="color:var(--text);">${approvals.length}</div><div class="stat-label">Approvals</div></div>
-      <div class="stat-card"><div class="stat-val" style="color:var(--text);">$${avgAmt}</div><div class="stat-label">Avg. Amount</div></div>
-      <div class="stat-card"><div class="stat-val" style="color:var(--text);">${avgRate}</div><div class="stat-label">Avg. Rate</div></div>
-    </div>
-    <div class="section" style="margin-bottom:20px;">
-      <div class="section-title">Approval Details</div>
-      <table class="dash-table">
-        <thead><tr><th>Business</th><th>Lender</th><th>Amount</th><th>Term</th><th>Rate</th><th>Payment</th><th>Rep</th></tr></thead>
-        <tbody>${approvals.map(a => `<tr onclick="openTab('${a.dealId}')">
-          <td class="dt-biz">${esc(a.business)}</td>
-          <td style="font-size:12px;">${esc(a.lenderName)}</td>
-          <td style="font-family:var(--mono);font-size:12px;color:var(--green);font-weight:600;">${esc(a.amount)}</td>
-          <td style="font-family:var(--mono);font-size:12px;">${esc(a.term)}</td>
-          <td style="font-family:var(--mono);font-size:12px;">${esc(a.rate)}</td>
-          <td style="font-family:var(--mono);font-size:12px;">${esc(a.payment)}</td>
-          <td style="font-size:12px;color:var(--accent);">${esc(a.rep)}</td>
-        </tr>`).join('')}</tbody>
-      </table>
-    </div>`;
-  }
-
-  c.innerHTML = `<div class="dash"><div class="dash-hero"><h2>Gotham Full Send</h2><p>Track deals, send submissions, manage approvals — all in one place.</p></div>
-    <div class="stats-row"><div class="stat-card"><div class="stat-val stat-accent">${activeDeals.length}</div><div class="stat-label">Active Deals</div></div><div class="stat-card"><div class="stat-val stat-yellow">${totalSent}</div><div class="stat-label">Sent</div></div><div class="stat-card"><div class="stat-val stat-green">${totalApproved}</div><div class="stat-label">Approved</div></div><div class="stat-card"><div class="stat-val stat-red">${totalDeclined}</div><div class="stat-label">Declined</div></div></div>
-    ${repStatsHtml}
-    ${approvalsHtml}
-    ${!activeDeals.length ? `<div class="empty-state"><h3>No active deals</h3><p>Click <strong>+ New Deal</strong> to get started.</p></div>` : ''}
-  </div>`;
+  c.innerHTML=`<div class="dash"><div class="dash-hero"><h2>Gotham Full Send</h2><p>Track deals, send submissions, manage approvals.</p></div><div class="stats-row"><div class="stat-card"><div class="stat-val stat-accent">${ad.length}</div><div class="stat-label">Active Deals</div></div><div class="stat-card"><div class="stat-val stat-yellow">${ts}</div><div class="stat-label">Sent</div></div><div class="stat-card"><div class="stat-val stat-accent">${ta}</div><div class="stat-label">Approved</div></div><div class="stat-card"><div class="stat-val stat-red">${td2}</div><div class="stat-label">Declined</div></div></div>${repHtml}${appHtml}${!ad.length?'<div class="empty-state"><h3>No active deals</h3><p>Click <strong>+ New Deal</strong> to get started.</p></div>':''}</div>`;
 }
 
-/* ============================================================
-   UI — Funded View
-   ============================================================ */
-function renderFundedView() {
-  const c = document.getElementById('content');
-  const fundedDeals = getFundedDeals();
-
-  const allLendersFlat = [];
-  Object.entries(LENDERS).forEach(([risk, list]) => {
-    list.forEach((l, i) => { allLendersFlat.push({ ...l, key: `${risk}-${i}` }); });
-  });
-
-  // Gather funded entries
-  const fundedEntries = [];
-  fundedDeals.forEach(d => {
-    if (!d.lenderStates || !d.fundedData) return;
-    Object.entries(d.lenderStates).forEach(([lk, state]) => {
-      if (state === 'funded' && d.fundedData[lk]) {
-        const fd = d.fundedData[lk];
-        const lender = allLendersFlat.find(l => l.key === lk);
-        fundedEntries.push({
-          business: d.fields?.business || 'Untitled',
-          lenderName: lender ? lender.name : lk,
-          amount: fd.amount || '',
-          term: fd.term || '',
-          rate: fd.rate || '',
-          points: fd.points || '',
-          commission: fd.commission || '',
-          rep: d.rep || '—',
-          dealId: d.id
-        });
-      }
-    });
-  });
-
-  // Totals
-  let totalFunded = 0, totalCommission = 0, pointsSum = 0, pointsCount = 0;
-  fundedEntries.forEach(f => {
-    const amt = parseFloat((f.amount||'').replace(/[^0-9.]/g,''));
-    if (!isNaN(amt)) totalFunded += amt;
-    const comm = parseFloat((f.commission||'').replace(/[^0-9.]/g,''));
-    if (!isNaN(comm)) totalCommission += comm;
-    const pts = parseFloat((f.points||'').replace(/[^0-9.]/g,''));
-    if (!isNaN(pts)) { pointsSum += pts; pointsCount++; }
-  });
-  const avgPts = pointsCount ? (pointsSum / pointsCount).toFixed(1) + '%' : '—';
-
-  c.innerHTML = `<div class="dash">
-    <div class="dash-hero"><h2>Funded Deals</h2><p>Deals that have closed and funded.</p></div>
-    <div class="stats-row">
-      <div class="stat-card"><div class="stat-val" style="color:var(--accent);">$${Math.round(totalFunded).toLocaleString()}</div><div class="stat-label">Total Funded</div></div>
-      <div class="stat-card"><div class="stat-val" style="color:var(--text);">${fundedEntries.length}</div><div class="stat-label">Deals Funded</div></div>
-      <div class="stat-card"><div class="stat-val" style="color:var(--accent);">$${Math.round(totalCommission).toLocaleString()}</div><div class="stat-label">Total Commission</div></div>
-      <div class="stat-card"><div class="stat-val" style="color:var(--text);">${avgPts}</div><div class="stat-label">Avg. Points</div></div>
-    </div>
-    ${fundedEntries.length ? `<div class="section"><div class="section-title">Funded Details</div>
-    <table class="dash-table">
-      <thead><tr><th>Business</th><th>Lender</th><th>Amount</th><th>Term</th><th>Rate</th><th>Pts</th><th>Commission</th><th>Rep</th></tr></thead>
-      <tbody>${fundedEntries.map(f => `<tr onclick="openTab('${f.dealId}')">
-        <td class="dt-biz">${esc(f.business)}</td>
-        <td style="font-size:12px;">${esc(f.lenderName)}</td>
-        <td style="font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:600;">${esc(f.amount)}</td>
-        <td style="font-family:var(--mono);font-size:12px;">${esc(f.term)}</td>
-        <td style="font-family:var(--mono);font-size:12px;">${esc(f.rate)}</td>
-        <td style="font-family:var(--mono);font-size:12px;">${esc(f.points)}</td>
-        <td style="font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:600;">${esc(f.commission)}</td>
-        <td style="font-size:12px;color:var(--accent);">${esc(f.rep)}</td>
-      </tr>`).join('')}</tbody>
-    </table></div>` : `<div class="empty-state"><h3>No funded deals yet</h3><p>Right-click a lender and select "Funded" to mark a deal as funded.</p></div>`}
-  </div>`;
+// Funded view
+function renderFundedView(){
+  const c=document.getElementById('content');const fd=getFundedDeals();const lf=getAllLendersFlat();const entries=[];
+  fd.forEach(d=>{if(!d.lenderStates||!d.fundedData)return;Object.entries(d.lenderStates).forEach(([lk,st])=>{if(st==='funded'&&d.fundedData[lk]){const f=d.fundedData[lk];const l=lf.find(x=>x.key===lk);entries.push({biz:d.fields?.business||'—',ln:l?l.name:lk,amt:f.amount||'',term:f.term||'',rate:f.rate||'',pts:f.points||'',comm:f.commission||'',rep:d.rep||'—',did:d.id});}});});
+  let totF=0,totC=0;entries.forEach(e=>{const a=parseFloat((e.amt||'').replace(/[^0-9.]/g,''));if(!isNaN(a))totF+=a;const co=parseFloat((e.comm||'').replace(/[^0-9.]/g,''));if(!isNaN(co))totC+=co;});
+  c.innerHTML=`<div class="dash"><div class="dash-hero"><h2>Funded Deals</h2><p>Deals that have closed and funded.</p></div><div class="stats-row"><div class="stat-card"><div class="stat-val stat-green">$${Math.round(totF).toLocaleString()}</div><div class="stat-label">Total Funded</div></div><div class="stat-card"><div class="stat-val stat-green">${entries.length}</div><div class="stat-label">Deals Funded</div></div><div class="stat-card"><div class="stat-val stat-green">$${Math.round(totC).toLocaleString()}</div><div class="stat-label">Total Commission</div></div></div>${entries.length?`<div class="section"><div class="section-title">Funded Details</div><table class="dash-table"><thead><tr><th>Business</th><th>Lender</th><th>Amount</th><th>Term</th><th>Rate</th><th>Pts</th><th>Commission</th><th>Rep</th></tr></thead><tbody>${entries.map(e=>`<tr onclick="openDeal('${e.did}')"><td class="dt-biz">${esc(e.biz)}</td><td style="font-size:12px;">${esc(e.ln)}</td><td style="font-family:var(--mono);font-size:12px;color:var(--green);font-weight:600;">${esc(e.amt)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(e.term)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(e.rate)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(e.pts)}</td><td style="font-family:var(--mono);font-size:12px;color:var(--green);font-weight:600;">${esc(e.comm)}</td><td style="font-size:12px;color:var(--accent);">${esc(e.rep)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty-state"><h3>No funded deals yet</h3></div>'}</div>`;
 }
 
-/* ============================================================
-   UI — Deal View
-   ============================================================ */
-function renderDealView(id) {
-  const d = deals[id];
-  if (!d) return;
-  d.emailFields = d.emailFields || {};
-  const ef = d.emailFields;
-  const c = document.getElementById('content');
-
-  c.innerHTML = `<div class="deal-view" data-deal-id="${id}">
-    <div class="deal-header">
-      <h2 id="dv-title">${esc(getDealLabel(d))}</h2>
-      <div class="deal-header-actions">
-        <button class="btn btn-danger btn-sm" onclick="deleteDeal('${id}')">Delete</button>
-        <button class="btn btn-sm" onclick="window.print()">Print</button>
-      </div>
-    </div>
-
-    <!-- DEAL INFO -->
-    <div class="section">
-      <div class="section-title">Deal Information</div>
-      <div class="fields-grid">
-        <div class="field"><label>Rep</label><select data-f="__rep__" style="font-family:var(--font);font-size:12px;padding:6px 9px;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);outline:none;">
-          <option value="">— Select Rep —</option>
-          ${reps.map(r=>`<option value="${esc(r)}"${d.rep===r?' selected':''}>${esc(r)}</option>`).join('')}
-        </select></div>
-        <div class="field"><label>Date</label><input type="date" data-f="date" value="${d.fields?.date||''}"></div>
-        <div class="field"><label>Business</label><input data-f="business" placeholder="Business name" value="${esc(d.fields?.business||'')}"></div>
-        <div class="field"><label>Industry</label><input data-f="industry" placeholder="Industry type" value="${esc(d.fields?.industry||'')}"></div>
-        <div class="field"><label>Name</label><input data-f="name" placeholder="Contact name" value="${esc(d.fields?.name||'')}"></div>
-        <div class="field"><label>TIB</label><input data-f="tib" placeholder="Time in business" value="${esc(d.fields?.tib||'')}"></div>
-        <div class="field"><label>Credit</label><input data-f="credit" placeholder="Credit score" value="${esc(d.fields?.credit||'')}"></div>
-        <div class="field"><label>State</label><input data-f="state" placeholder="ST" maxlength="2" style="text-transform:uppercase" value="${esc(d.fields?.state||'')}"></div>
-        <div class="field"><label>ISO</label><input data-f="iso" placeholder="ISO name" value="${esc(d.fields?.iso||'')}"></div>
-        <div class="field"><label>Number</label><input data-f="number" placeholder="Phone number" value="${esc(d.fields?.number||'')}"></div>
-        <div class="field field-wide"><label>Email</label><input data-f="email" placeholder="Email address" type="email" value="${esc(d.fields?.email||'')}"></div>
-        <div class="field"><label>Lead Source</label><input data-f="leadsource" placeholder="Source" value="${esc(d.fields?.leadsource||'')}"></div>
-      </div>
-    </div>
-
-    <!-- MONTHLY REVENUE -->
-    <div class="section">
-      <div class="section-title">Monthly Revenue</div>
-      <table class="rev-table">
-        <thead><tr><th style="width:34px">Mo</th><th>Monthly Revs</th><th># of Deposits</th><th>ADB</th><th>MCA Positions</th><th>Balance</th><th>Payment - D/W</th></tr></thead>
-        <tbody>${[1,2,3,4].map(i=>`<tr><td class="row-label"><input data-mo="${i}" maxlength="2" placeholder="—" value="${esc(d.rev?.['mo-'+i]||'')}"></td>${['rev','deps','adb','mca','bal','pay'].map(f=>`<td><input data-rev="${i}-${f}" value="${esc(d.rev?.[i+'-'+f]||'')}"></td>`).join('')}</tr>`).join('')}</tbody>
-      </table>
-    </div>
-
-    <!-- COURTS -->
-    <div class="section">
-      <div class="inline-group">
-        <div>
-          <span style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">In Courts?</span>
-          <div class="radio-group" style="margin-top:5px">
-            <input type="radio" name="courts-${id}" id="cy-${id}" value="Yes" ${d.courts==='Yes'?'checked':''}><label for="cy-${id}">Yes</label>
-            <input type="radio" name="courts-${id}" id="cn-${id}" value="No" ${d.courts==='No'?'checked':''}><label for="cn-${id}">No</label>
-          </div>
-        </div>
-        <div style="flex:1"><div class="field"><label>Most Recent Funding</label><input data-f="recentfunding" placeholder="Details of most recent funding" value="${esc(d.fields?.recentfunding||'')}"></div></div>
-      </div>
-    </div>
-
-    <!-- SUBMISSION EMAIL SECTION -->
-    <div class="section section-email">
-      <div class="section-title">Submission Email</div>
-      <div class="fields-grid">
-        <div class="field field-wide"><label>Subject Line</label><input data-ef="subject" placeholder="***New Deal*** - " value="${esc(ef.subject || '***New Deal*** - ')}"></div>
-        <div class="field"><label>Status</label><input data-ef="status" placeholder="e.g. SEEKING MAX" value="${esc(ef.status||'')}"></div>
-        <div class="field"><label>Notes</label><input data-ef="notes" placeholder="Additional notes for email" value="${esc(ef.notes||'')}"></div>
-        <div class="field field-wide"><label>Current Balances</label><textarea data-ef="balances" placeholder="e.g. NONE">${esc(ef.balances||'')}</textarea></div>
-        <div class="field field-wide"><label>CC (Optional)</label><input data-ef="cc" placeholder="email1@example.com, email2@example.com" value="${esc(ef.cc||'')}"></div>
-      </div>
-      <div class="drop-zone" id="drop-zone-${id}">
-        <p>Drag & Drop Files Here or Click to Browse</p>
-      </div>
-      <input type="file" id="file-input-${id}" multiple style="display:none;">
-      <div id="file-list-${id}"></div>
-    </div>
-
-    <!-- LENDER TABLE -->
-    <div class="section">
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <div class="section-title" style="margin-bottom:0;">Lender Submissions</div>
-        <div class="legend">
-          <div class="legend-item"><span class="legend-dot ld-y"></span>Sent</div>
-          <div class="legend-item"><span class="legend-dot ld-g"></span>Approved</div>
-          <div class="legend-item"><span class="legend-dot ld-r"></span>Declined</div>
-          <div class="legend-item"><span class="legend-dot" style="background:var(--accent-dim);border:1px solid var(--accent);"></span>Funded</div>
-          <div class="legend-item" style="margin-left:6px;font-size:10px;color:var(--text-muted);">Click = Sent &nbsp;|&nbsp; Right-click = Approve / Decline</div>
-        </div>
-      </div>
-      <div id="lender-container-${id}"></div>
-    </div>
-
-    <!-- SEND BUTTON -->
-    <button class="btn-send" id="send-btn-${id}" onclick="sendToHighlighted('${id}')">Send to Highlighted Lenders</button>
-    <div class="progress-section" id="progress-${id}">
-      <div class="progress-bar"><div class="progress-fill" id="pf-${id}">0%</div></div>
-      <div class="progress-text" id="pt-${id}"></div>
-    </div>
-    <div id="send-results-${id}"></div>
-  </div>`;
-
-  // Build lender tables
-  buildLenderTables(id, d);
-
-  // Wire up file handling
-  setupFileHandling(id);
-
-  // Render existing files
-  renderDealFiles(id);
-
-  // Auto-save
-  const view = c.querySelector('.deal-view');
-  view.addEventListener('input', () => { saveDealFromDOM(id); renderSidebar(); renderTabBar(); });
-  view.addEventListener('change', () => { saveDealFromDOM(id); renderSidebar(); renderTabBar(); });
+// OMNS view
+function renderOMNSView(){
+  const c=document.getElementById('content');const od=getOMNSDeals();const lf=getAllLendersFlat();const entries=[];
+  od.forEach(d=>{if(!d.lenderStates||!d.omnsData)return;Object.entries(d.lenderStates).forEach(([lk,st])=>{if(st==='omns'&&d.omnsData[lk]){const o=d.omnsData[lk];const l=lf.find(x=>x.key===lk);entries.push({biz:d.fields?.business||'—',ln:l?l.name:lk,amt:o.amount||'',term:o.term||'',rate:o.rate||'',pay:o.payment||'',reason:o.reason||'',rep:d.rep||'—',did:d.id});}});});
+  c.innerHTML=`<div class="dash"><div class="dash-hero"><h2>Offers Made Not Sold</h2><p>Approved deals the client did not accept.</p></div><div class="stats-row"><div class="stat-card"><div class="stat-val" style="color:var(--orange);">${entries.length}</div><div class="stat-label">Total OMNS</div></div></div>${entries.length?`<div class="section"><div class="section-title">OMNS Details</div><table class="dash-table"><thead><tr><th>Business</th><th>Lender</th><th>Amount</th><th>Term</th><th>Rate</th><th>Payment</th><th>Reason</th><th>Rep</th></tr></thead><tbody>${entries.map(e=>`<tr onclick="openDeal('${e.did}')"><td class="dt-biz">${esc(e.biz)}</td><td style="font-size:12px;">${esc(e.ln)}</td><td style="font-family:var(--mono);font-size:12px;color:var(--orange);font-weight:600;">${esc(e.amt)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(e.term)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(e.rate)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(e.pay)}</td><td style="font-size:12px;color:var(--orange);">${esc(e.reason)}</td><td style="font-size:12px;color:var(--accent);">${esc(e.rep)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty-state"><h3>No OMNS deals yet</h3></div>'}</div>`;
 }
 
-function buildLenderTables(id, d) {
-  const container = document.getElementById('lender-container-' + id);
-  for (const [risk, list] of Object.entries(LENDERS)) {
-    const hdr = document.createElement('div');
-    hdr.className = `risk-header ${RISK_CLASS[risk]}`;
-    hdr.textContent = risk;
-    container.appendChild(hdr);
+// Monthly view
+function renderMonthlyView(){
+  const c=document.getElementById('content');const now=new Date();if(selectedMonth===null)selectedMonth=now.getMonth();const yr=now.getFullYear();
+  const allDeals=Object.values(deals);
+  const monthDeals=allDeals.filter(d=>{const m=getDealMonth(d),y=getDealYear(d);return m===selectedMonth&&y===yr;});
+  let fDeals=monthDeals.filter(d=>selectedRep?d.rep===selectedRep:true);
+  let ts=0,ta=0,td2=0,tf=0,to=0,totFAmt=0,totComm=0;
+  const lf=getAllLendersFlat();
+  fDeals.forEach(d=>{const p=getDealPips(d);ts+=p.sent;ta+=p.approved;td2+=p.declined;tf+=p.funded;to+=p.omns;if(d.fundedData)Object.values(d.fundedData).forEach(f=>{const a=parseFloat((f.amount||'').replace(/[^0-9.]/g,''));if(!isNaN(a))totFAmt+=a;const co=parseFloat((f.commission||'').replace(/[^0-9.]/g,''));if(!isNaN(co))totComm+=co;});});
+  const monthOpts=MONTHS.map((m,i)=>`<option value="${i}"${i===selectedMonth?' selected':''}>${m}</option>`).join('');
+  c.innerHTML=`<div class="dash"><div class="dash-hero"><h2>Monthly Report</h2><p>${MONTHS[selectedMonth]} ${yr}</p></div><div class="month-selector"><select onchange="selectedMonth=parseInt(this.value);renderMonthlyView();">${monthOpts}</select>${selectedRep?`<span style="font-size:12px;color:var(--accent);font-weight:600;">Filtered: ${esc(selectedRep)}</span>`:''}</div><div class="stats-row"><div class="stat-card"><div class="stat-val stat-accent">${fDeals.length}</div><div class="stat-label">Total Deals</div></div><div class="stat-card"><div class="stat-val stat-yellow">${ts}</div><div class="stat-label">Submissions</div></div><div class="stat-card"><div class="stat-val stat-accent">${ta}</div><div class="stat-label">Approvals</div></div><div class="stat-card"><div class="stat-val stat-red">${td2}</div><div class="stat-label">Declines</div></div></div><div class="stats-row"><div class="stat-card"><div class="stat-val stat-green">${tf}</div><div class="stat-label">Funded</div></div><div class="stat-card"><div class="stat-val stat-green">$${Math.round(totFAmt).toLocaleString()}</div><div class="stat-label">Funded Amount</div></div><div class="stat-card"><div class="stat-val stat-green">$${Math.round(totComm).toLocaleString()}</div><div class="stat-label">Commission</div></div><div class="stat-card"><div class="stat-val" style="color:var(--orange);">${to}</div><div class="stat-label">OMNS</div></div></div></div>`;
+}
 
-    const table = document.createElement('table');
-    table.className = 'lender-table';
-    table.innerHTML = `<thead><tr><th class="col-name">Lender</th><th class="col-email">Email</th><th class="col-exempt">Exemptions</th><th class="col-status">Status / Notes</th></tr></thead>`;
-    const tbody = document.createElement('tbody');
+// Deal View
+function renderDealView(id){
+  const d=deals[id];if(!d)return;d.emailFields=d.emailFields||{};const ef=d.emailFields;const c=document.getElementById('content');
+  c.innerHTML=`<div class="deal-view" data-deal-id="${id}"><div class="deal-header"><h2>${esc(getDealLabel(d))}</h2><div class="deal-header-actions"><button class="btn btn-danger btn-sm" onclick="deleteDeal('${id}')">Delete</button><button class="btn btn-sm" onclick="window.print()">Print</button></div></div>
+  <div class="section"><div class="section-title">Deal Information</div><div class="fields-grid"><div class="field"><label>Rep</label><select data-f="__rep__" style="font-family:var(--font);font-size:12px;padding:6px 9px;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);outline:none;"><option value="">— Select Rep —</option>${reps.map(r=>`<option value="${esc(r)}"${d.rep===r?' selected':''}>${esc(r)}</option>`).join('')}</select></div><div class="field"><label>Date</label><input type="date" data-f="date" value="${d.fields?.date||''}"></div><div class="field"><label>Business</label><input data-f="business" placeholder="Business name" value="${esc(d.fields?.business||'')}"></div><div class="field"><label>Industry</label><input data-f="industry" placeholder="Industry type" value="${esc(d.fields?.industry||'')}"></div><div class="field"><label>Name</label><input data-f="name" placeholder="Contact name" value="${esc(d.fields?.name||'')}"></div><div class="field"><label>TIB</label><input data-f="tib" placeholder="Time in business" value="${esc(d.fields?.tib||'')}"></div><div class="field"><label>Credit</label><input data-f="credit" placeholder="Credit score" value="${esc(d.fields?.credit||'')}"></div><div class="field"><label>State</label><input data-f="state" placeholder="ST" maxlength="2" style="text-transform:uppercase" value="${esc(d.fields?.state||'')}"></div><div class="field"><label>ISO</label><input data-f="iso" placeholder="ISO name" value="${esc(d.fields?.iso||'')}"></div><div class="field"><label>Number</label><input data-f="number" placeholder="Phone number" value="${esc(d.fields?.number||'')}"></div><div class="field field-wide"><label>Email</label><input data-f="email" placeholder="Email address" type="email" value="${esc(d.fields?.email||'')}"></div><div class="field"><label>Lead Source</label><input data-f="leadsource" placeholder="Source" value="${esc(d.fields?.leadsource||'')}"></div></div></div>
+  <div class="section"><div class="section-title">Monthly Revenue</div><table class="rev-table"><thead><tr><th style="width:34px">Mo</th><th>Monthly Revs</th><th># of Deposits</th><th>ADB</th><th>MCA Positions</th><th>Balance</th><th>Payment - D/W</th></tr></thead><tbody>${[1,2,3,4].map(i=>`<tr><td class="row-label"><input data-mo="${i}" maxlength="2" placeholder="—" value="${esc(d.rev?.['mo-'+i]||'')}"></td>${['rev','deps','adb','mca','bal','pay'].map(f=>`<td><input data-rev="${i}-${f}" value="${esc(d.rev?.[i+'-'+f]||'')}"></td>`).join('')}</tr>`).join('')}</tbody></table></div>
+  <div class="section"><div class="inline-group"><div><span style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">In Courts?</span><div class="radio-group" style="margin-top:5px"><input type="radio" name="courts-${id}" id="cy-${id}" value="Yes" ${d.courts==='Yes'?'checked':''}><label for="cy-${id}">Yes</label><input type="radio" name="courts-${id}" id="cn-${id}" value="No" ${d.courts==='No'?'checked':''}><label for="cn-${id}">No</label></div></div><div style="flex:1"><div class="field"><label>Most Recent Funding</label><input data-f="recentfunding" placeholder="Details" value="${esc(d.fields?.recentfunding||'')}"></div></div></div></div>
+  <div class="section section-email"><div class="section-title">Submission Email</div><div class="fields-grid"><div class="field field-wide"><label>Subject Line</label><input data-ef="subject" placeholder="***New Deal*** - " value="${esc(ef.subject||'***New Deal*** - ')}"></div><div class="field"><label>Status</label><input data-ef="status" placeholder="e.g. SEEKING MAX" value="${esc(ef.status||'')}"></div><div class="field"><label>Notes</label><input data-ef="notes" placeholder="Additional notes" value="${esc(ef.notes||'')}"></div><div class="field field-wide"><label>Current Balances</label><textarea data-ef="balances" placeholder="e.g. NONE">${esc(ef.balances||'')}</textarea></div><div class="field field-wide"><label>CC (Optional)</label><input data-ef="cc" placeholder="email1@example.com, email2@example.com" value="${esc(ef.cc||'')}"></div></div><div class="drop-zone" id="drop-zone-${id}"><p>Drag & Drop Files Here or Click to Browse</p></div><input type="file" id="file-input-${id}" multiple style="display:none;"><div id="file-list-${id}"></div></div>
+  <div class="section"><div style="display:flex;align-items:center;justify-content:space-between;"><div class="section-title" style="margin-bottom:0;">Lender Submissions</div><div class="legend"><div class="legend-item"><span class="legend-dot ld-y"></span>Sent</div><div class="legend-item"><span class="legend-dot ld-b"></span>Approved</div><div class="legend-item"><span class="legend-dot ld-r"></span>Declined</div><div class="legend-item"><span class="legend-dot ld-g"></span>Funded</div><div class="legend-item"><span class="legend-dot ld-o"></span>OMNS</div></div></div><div id="lender-container-${id}"></div></div>
+  <button class="btn-send" id="send-btn-${id}" onclick="sendToHighlighted('${id}')">Send to Highlighted Lenders</button>
+  <div class="progress-section" id="progress-${id}"><div class="progress-bar"><div class="progress-fill" id="pf-${id}">0%</div></div><div class="progress-text" id="pt-${id}"></div></div><div id="send-results-${id}"></div></div>`;
+  buildLenderTables(id,d);setupFileHandling(id);renderDealFiles(id);
+  const view=c.querySelector('.deal-view');
+  view.addEventListener('input',()=>{saveDealFromDOM(id);renderSidebar();});
+  view.addEventListener('change',()=>{saveDealFromDOM(id);renderSidebar();});
+}
 
-    list.forEach((l, i) => {
-      const lk = `${risk}-${i}`;
-      const tr = document.createElement('tr');
-      tr.dataset.lenderKey = lk;
-      const state = d.lenderStates?.[lk] || '';
-      if (state) tr.classList.add(state);
-      const portalBadge = l.portal ? '<span class="portal-badge">PORTAL</span>' : '';
-      const emailedList = d.emailedLenders || [];
-      const emailedBadge = (!l.portal && emailedList.includes(lk)) ? '<span class="emailed-badge">EMAILED</span>' : '';
-      tr.innerHTML = `
-        <td class="lender-name" title="${l.name}">${l.name}${portalBadge}${emailedBadge}</td>
-        <td class="lender-email">${l.email}</td>
-        <td class="lender-exempt">${l.exempt}</td>
-        <td><input class="status-input" data-lk="${lk}" placeholder="Enter status..." value="${esc(d.lenders?.[lk]||'')}"></td>`;
-      tr.addEventListener('click', (e) => {
-        if (e.target.classList.contains('status-input')) return;
-        if (tr.classList.contains('approved') || tr.classList.contains('declined') || tr.classList.contains('funded')) return;
-        tr.classList.toggle('sent');
-        saveDealFromDOM(id);
-        renderSidebar();
-      });
-      tr.addEventListener('contextmenu', (e) => {
-        if (e.target.classList.contains('status-input')) return;
-        e.preventDefault();
-        ctxTarget = { tr, dealId: id };
-        const menu = document.getElementById('ctx-menu');
-        menu.style.left = Math.min(e.clientX, window.innerWidth - 170) + 'px';
-        menu.style.top = Math.min(e.clientY, window.innerHeight - 120) + 'px';
-        menu.classList.add('show');
-      });
+function buildLenderTables(id,d){
+  const container=document.getElementById('lender-container-'+id);
+  for(const[risk,list]of Object.entries(LENDERS)){
+    const hdr=document.createElement('div');hdr.className=`risk-header ${RISK_CLASS[risk]}`;hdr.textContent=risk;container.appendChild(hdr);
+    const table=document.createElement('table');table.className='lender-table';table.innerHTML=`<thead><tr><th class="col-name">Lender</th><th class="col-email">Email</th><th class="col-exempt">Exemptions</th><th class="col-status">Status / Notes</th></tr></thead>`;
+    const tbody=document.createElement('tbody');
+    list.forEach((l,i)=>{
+      const lk=`${risk}-${i}`;const tr=document.createElement('tr');tr.dataset.lenderKey=lk;
+      const state=d.lenderStates?.[lk]||'';if(state)tr.classList.add(state);
+      const pb=l.portal?'<span class="portal-badge">PORTAL</span>':'';
+      const el=(d.emailedLenders||[]);const eb=(!l.portal&&el.includes(lk))?'<span class="emailed-badge">EMAILED</span>':'';
+      tr.innerHTML=`<td class="lender-name" title="${l.name}">${l.name}${pb}${eb}</td><td class="lender-email">${l.email}</td><td class="lender-exempt">${l.exempt}</td><td><input class="status-input" data-lk="${lk}" placeholder="Enter status..." value="${esc(d.lenders?.[lk]||'')}"></td>`;
+      tr.addEventListener('click',e=>{if(e.target.classList.contains('status-input'))return;if(tr.classList.contains('approved')||tr.classList.contains('declined')||tr.classList.contains('funded')||tr.classList.contains('omns'))return;tr.classList.toggle('sent');saveDealFromDOM(id);renderSidebar();});
+      tr.addEventListener('contextmenu',e=>{if(e.target.classList.contains('status-input'))return;e.preventDefault();ctxTarget={tr,dealId:id};const menu=document.getElementById('ctx-menu');menu.style.left=Math.min(e.clientX,window.innerWidth-180)+'px';menu.style.top=Math.min(e.clientY,window.innerHeight-200)+'px';menu.classList.add('show');});
       tbody.appendChild(tr);
     });
-    table.appendChild(tbody);
-    container.appendChild(table);
+    table.appendChild(tbody);container.appendChild(table);
   }
 }
 
-/* ============================================================
-   FILE HANDLING
-   ============================================================ */
-function setupFileHandling(id) {
-  if (!dealFiles[id]) dealFiles[id] = [];
-  const dz = document.getElementById('drop-zone-' + id);
-  const fi = document.getElementById('file-input-' + id);
-  dz.addEventListener('click', () => fi.click());
-  dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('dragover'); });
-  dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
-  dz.addEventListener('drop', (e) => { e.preventDefault(); dz.classList.remove('dragover'); addFiles(id, e.dataTransfer.files); });
-  fi.addEventListener('change', (e) => { addFiles(id, e.target.files); });
-}
+// File handling
+function setupFileHandling(id){if(!dealFiles[id])dealFiles[id]=[];const dz=document.getElementById('drop-zone-'+id),fi=document.getElementById('file-input-'+id);dz.addEventListener('click',()=>fi.click());dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover');});dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');addFiles(id,e.dataTransfer.files);});fi.addEventListener('change',e=>{addFiles(id,e.target.files);});}
+function addFiles(id,files){if(!dealFiles[id])dealFiles[id]=[];Array.from(files).forEach(f=>{if(!dealFiles[id].find(x=>x.name===f.name))dealFiles[id].push(f);});renderDealFiles(id);}
+function renderDealFiles(id){const fl=document.getElementById('file-list-'+id);if(!fl)return;fl.innerHTML=(dealFiles[id]||[]).map((f,i)=>`<div class="file-item"><span>${esc(f.name)}</span><button class="file-remove" onclick="dealFiles['${id}'].splice(${i},1);renderDealFiles('${id}');">×</button></div>`).join('');}
 
-function addFiles(id, files) {
-  if (!dealFiles[id]) dealFiles[id] = [];
-  Array.from(files).forEach(f => { if (!dealFiles[id].find(x => x.name === f.name)) dealFiles[id].push(f); });
-  renderDealFiles(id);
-}
-
-function renderDealFiles(id) {
-  const fl = document.getElementById('file-list-' + id);
-  if (!fl) return;
-  const files = dealFiles[id] || [];
-  fl.innerHTML = files.map((f, i) => `<div class="file-item"><span>${esc(f.name)}</span><button class="file-remove" onclick="removeFile('${id}',${i})">×</button></div>`).join('');
-}
-
-function removeFile(id, idx) {
-  dealFiles[id].splice(idx, 1);
-  renderDealFiles(id);
-}
-
-/* ============================================================
-   SAVE / GATHER
-   ============================================================ */
-function saveDealFromDOM(id) {
-  const view = document.querySelector(`.deal-view[data-deal-id="${id}"]`);
-  if (!view) return;
-  const d = deals[id];
-  if (!d) return;
-
-  d.fields = d.fields || {};
-  view.querySelectorAll('[data-f]').forEach(el => {
-    if (el.dataset.f === '__rep__') d.rep = el.value;
-    else d.fields[el.dataset.f] = el.value;
-  });
-
-  const court = view.querySelector(`input[name="courts-${id}"]:checked`);
-  d.courts = court ? court.value : '';
-
-  d.rev = d.rev || {};
-  view.querySelectorAll('[data-rev]').forEach(el => { d.rev[el.dataset.rev] = el.value; });
-  view.querySelectorAll('[data-mo]').forEach(el => { d.rev['mo-'+el.dataset.mo] = el.value; });
-
-  // Email fields
-  d.emailFields = d.emailFields || {};
-  view.querySelectorAll('[data-ef]').forEach(el => { d.emailFields[el.dataset.ef] = el.value; });
-
-  d.lenders = d.lenders || {};
-  d.lenderStates = d.lenderStates || {};
-  view.querySelectorAll('[data-lk]').forEach(el => { d.lenders[el.dataset.lk] = el.value; });
-  view.querySelectorAll('tr[data-lender-key]').forEach(tr => {
-    const k = tr.dataset.lenderKey;
-    if (tr.classList.contains('funded')) d.lenderStates[k] = 'funded';
-    else if (tr.classList.contains('approved')) d.lenderStates[k] = 'approved';
-    else if (tr.classList.contains('declined')) d.lenderStates[k] = 'declined';
-    else if (tr.classList.contains('sent')) d.lenderStates[k] = 'sent';
-    else delete d.lenderStates[k];
-  });
+// Save from DOM
+function saveDealFromDOM(id){
+  const view=document.querySelector(`.deal-view[data-deal-id="${id}"]`);if(!view)return;const d=deals[id];if(!d)return;
+  d.fields=d.fields||{};view.querySelectorAll('[data-f]').forEach(el=>{if(el.dataset.f==='__rep__')d.rep=el.value;else d.fields[el.dataset.f]=el.value;});
+  const court=view.querySelector(`input[name="courts-${id}"]:checked`);d.courts=court?court.value:'';
+  d.rev=d.rev||{};view.querySelectorAll('[data-rev]').forEach(el=>{d.rev[el.dataset.rev]=el.value;});view.querySelectorAll('[data-mo]').forEach(el=>{d.rev['mo-'+el.dataset.mo]=el.value;});
+  d.emailFields=d.emailFields||{};view.querySelectorAll('[data-ef]').forEach(el=>{d.emailFields[el.dataset.ef]=el.value;});
+  d.lenders=d.lenders||{};d.lenderStates=d.lenderStates||{};
+  view.querySelectorAll('[data-lk]').forEach(el=>{d.lenders[el.dataset.lk]=el.value;});
+  view.querySelectorAll('tr[data-lender-key]').forEach(tr=>{const k=tr.dataset.lenderKey;if(tr.classList.contains('funded'))d.lenderStates[k]='funded';else if(tr.classList.contains('omns'))d.lenderStates[k]='omns';else if(tr.classList.contains('approved'))d.lenderStates[k]='approved';else if(tr.classList.contains('declined'))d.lenderStates[k]='declined';else if(tr.classList.contains('sent'))d.lenderStates[k]='sent';else delete d.lenderStates[k];});
   persist();
 }
 
-/* ============================================================
-   EMAIL SENDING
-   ============================================================ */
-async function sendToHighlighted(id) {
-  saveDealFromDOM(id);
-  const d = deals[id];
-  if (!d) return;
-  d.emailedLenders = d.emailedLenders || [];
+// Context menu
+function setLenderState(state){
+  if(!ctxTarget)return;const{tr,dealId}=ctxTarget;
+  if(state==='approved'){hideCtx();showPopup('approved',tr,dealId);return;}
+  if(state==='funded'){hideCtx();showPopup('funded',tr,dealId);return;}
+  if(state==='omns'){hideCtx();showPopup('omns',tr,dealId);return;}
+  tr.classList.remove('sent','approved','declined','funded','omns');
+  if(state)tr.classList.add(state);
+  if(!state){const d=deals[dealId];if(d){if(d.approvalData)delete d.approvalData[tr.dataset.lenderKey];if(d.fundedData)delete d.fundedData[tr.dataset.lenderKey];if(d.omnsData)delete d.omnsData[tr.dataset.lenderKey];}}
+  saveDealFromDOM(dealId);renderSidebar();hideCtx();
+}
+function forceResend(){if(!ctxTarget)return;const{tr,dealId}=ctxTarget;const lk=tr.dataset.lenderKey;const d=deals[dealId];if(d){d.emailedLenders=(d.emailedLenders||[]).filter(k=>k!==lk);tr.classList.remove('approved','declined','funded','omns');tr.classList.add('sent');saveDealFromDOM(dealId);renderDealView(dealId);toast('Marked for re-send');}hideCtx();}
 
-  // Gather all lenders flat
-  const allLenders = [];
-  Object.entries(LENDERS).forEach(([risk, list]) => {
-    list.forEach((l, i) => { allLenders.push({ ...l, key: `${risk}-${i}` }); });
-  });
+function showPopup(type,tr,dealId){
+  const lk=tr.dataset.lenderKey;const d=deals[dealId];const lf=getAllLendersFlat();const lender=lf.find(l=>l.key===lk);const ln=lender?lender.name:lk;const biz=d?.fields?.business||'Untitled';
+  const existing=type==='approved'?(d?.approvalData?.[lk]||{}):type==='funded'?(d?.fundedData?.[lk]||{}):(d?.omnsData?.[lk]||{});
+  const colors={approved:{border:'var(--accent)',title:'var(--accent)',btn:'btn-approve-action',label:'Save Approval'},funded:{border:'var(--green)',title:'var(--green)',btn:'btn-funded-action',label:'Save Funded Deal'},omns:{border:'var(--orange)',title:'var(--orange)',btn:'btn-omns-action',label:'Save OMNS'}};
+  const col=colors[type];const labels={approved:'Approved',funded:'Funded',omns:'OMNS'};
+  let fieldsHTML=`<div class="overlay-grid"><div class="field"><label>Amount</label><input id="pop-amount" placeholder="$50,000" value="${esc(existing.amount||'')}"></div><div class="field"><label>Term</label><input id="pop-term" placeholder="6 months" value="${esc(existing.term||'')}"></div><div class="field"><label>Rate / Factor</label><input id="pop-rate" placeholder="1.35" value="${esc(existing.rate||'')}"></div><div class="field"><label>${type==='funded'?'Points':'Payment'}</label><input id="pop-four" placeholder="${type==='funded'?'10%':'$2,250/day'}" value="${esc(type==='funded'?(existing.points||''):(existing.payment||''))}"></div></div>`;
+  if(type==='funded')fieldsHTML+=`<div class="overlay-full"><div class="field"><label>Total Commission</label><input id="pop-comm" placeholder="$5,000" value="${esc(existing.commission||'')}"></div></div>`;
+  if(type==='omns')fieldsHTML+=`<div class="overlay-full"><div class="field"><label>Reason For Passing</label><textarea id="pop-reason" placeholder="Why the client passed..." style="min-height:50px;">${esc(existing.reason||'')}</textarea></div></div>`;
+  const ol=document.createElement('div');ol.className='overlay';ol.id='popup-overlay';
+  ol.innerHTML=`<div class="overlay-box" style="border:1px solid ${col.border};"><h3 style="color:${col.title};">${esc(ln)} — ${labels[type]}</h3><div class="overlay-sub">${esc(biz)}</div>${fieldsHTML}<div class="overlay-btns"><button class="btn" onclick="closePopup()">Cancel</button><button class="btn ${col.btn}" onclick="savePopup('${type}','${dealId}','${lk}')">${col.label}</button></div></div>`;
+  document.body.appendChild(ol);ol._tr=tr;document.getElementById('pop-amount').focus();
+}
+function savePopup(type,dealId,lk){
+  const d=deals[dealId];if(!d)return;
+  const base={amount:document.getElementById('pop-amount').value.trim(),term:document.getElementById('pop-term').value.trim(),rate:document.getElementById('pop-rate').value.trim()};
+  if(type==='approved'){d.approvalData=d.approvalData||{};d.approvalData[lk]={...base,payment:document.getElementById('pop-four').value.trim()};}
+  else if(type==='funded'){d.fundedData=d.fundedData||{};d.fundedData[lk]={...base,points:document.getElementById('pop-four').value.trim(),commission:document.getElementById('pop-comm').value.trim()};}
+  else if(type==='omns'){d.omnsData=d.omnsData||{};d.omnsData[lk]={...base,payment:document.getElementById('pop-four').value.trim(),reason:document.getElementById('pop-reason').value.trim()};}
+  const ol=document.getElementById('popup-overlay');if(ol&&ol._tr){ol._tr.classList.remove('sent','approved','declined','funded','omns');ol._tr.classList.add(type);}
+  closePopup();saveDealFromDOM(dealId);renderSidebar();renderTabBar();
+}
+function closePopup(){const o=document.getElementById('popup-overlay');if(o)o.remove();}
 
-  // Gather highlighted (sent) lenders that are NOT portal-only
-  const highlightedLenders = [];
-  document.querySelectorAll(`[data-deal-id="${id}"] tr.sent[data-lender-key]`).forEach(tr => {
-    const lk = tr.dataset.lenderKey;
-    const lender = allLenders.find(l => l.key === lk);
-    if (lender && !lender.portal && lender.to) highlightedLenders.push(lender);
-  });
+function hideCtx(){document.getElementById('ctx-menu').classList.remove('show');ctxTarget=null;}
+document.addEventListener('click',e=>{if(!document.getElementById('ctx-menu').contains(e.target))hideCtx();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){hideCtx();closePopup();}});
 
-  if (!highlightedLenders.length) { alert('No emailable lenders highlighted. Click lenders to highlight them yellow, then send.'); return; }
-
-  // Split into new vs already emailed
-  const newToSend = highlightedLenders.filter(l => !d.emailedLenders.includes(l.key));
-  const alreadyEmailed = highlightedLenders.filter(l => d.emailedLenders.includes(l.key));
-
-  if (!newToSend.length) { alert(`All ${alreadyEmailed.length} highlighted lenders have already been emailed for this deal. Use right-click → Force Re-send to re-send.`); return; }
-
-  // Validate
-  const ef = d.emailFields || {};
-  const subject = ef.subject || '***New Deal*** - ';
-  const status = ef.status || '';
-  const businessName = d.fields?.business || '';
-  if (!businessName) { alert('Please fill in the Business Name first.'); return; }
-  if (!status) { alert('Please fill in the Status field in the Submission Email section.'); return; }
-
-  // Check auth
-  const token = await ensureToken();
-  if (!token) { alert('Please sign in with Microsoft before sending.'); return; }
-
-  const skipMsg = alreadyEmailed.length ? ` (skipping ${alreadyEmailed.length} already emailed)` : '';
-  if (!confirm(`Send ${newToSend.length} emails from ${signedInUser.username}?${skipMsg}`)) return;
-
-  // Build email body
-  const industry = d.fields?.industry || '';
-  const balances = ef.balances || '';
-  const notes = ef.notes || '';
-  let body = `***New Deal*** - ${businessName}<br><br>`;
-  body += `<b><u>Status:</u></b> ${status}<br><br>`;
-  if (industry) body += `<b><u>Industry:</u></b> ${industry}<br><br>`;
-  if (balances) body += `<b><u>Current Balances:</u></b><br>${balances.replace(/\n/g,'<br>')}<br><br>`;
-  if (notes) body += `<b><u>Notes:</u></b><br>${notes.replace(/\n/g,'<br>')}<br><br>`;
-  body += `<br><br>`;
-  body += `<span style="font-size:14pt;font-weight:bold;">Gotham Capital</span><br>`;
-  body += `<span style="font-size:12pt;font-style:italic;">Submissions</span><br><br>`;
-  body += `40 Wall St., New York, NY 10005<br>`;
-  body += `gothamcapitalfunding.com<br><br>`;
-  body += `<span style="font-size:9pt;font-style:italic;">CONFIDENTIALITY NOTICE: The contents of this email message and any attachments are intended solely for the addressee(s) and may contain confidential and/or privileged information and may be legally protected from disclosure. If you are not the intended recipient of this message or their agent, or if this message has been addressed to you in error, please immediately alert the sender by reply email and then delete this message and any attachments. If you are not the intended recipient, you are hereby notified that any use, dissemination, copying, or storage of this message or its attachments is strictly prohibited. Disclaimer: This e-mail message has been sent to you by an independent contractor of RJ Marketing Group Inc, DBA Gotham Capital. ("GC"). The sender of this message is not authorized to exceed the scope of their authority, in the limited capacity in which they serve as an independent contractor of GC, and any information transmitted by the sender in violation of same, is not endorsed by GC, nor does it reflect the position, statements, or opinions of GC. GC assumes no liability for the contents of this e-mail.</span>`;
-
-  // Prepare attachments once
-  const files = dealFiles[id] || [];
-  let attachments = [];
-  if (files.length) {
-    attachments = await Promise.all(files.map(fileToAttachment));
+// Email sending (preserved from v3)
+async function sendToHighlighted(id){
+  saveDealFromDOM(id);const d=deals[id];if(!d)return;d.emailedLenders=d.emailedLenders||[];
+  const allL=getAllLendersFlat();const highlighted=[];
+  document.querySelectorAll(`[data-deal-id="${id}"] tr.sent[data-lender-key]`).forEach(tr=>{const lk=tr.dataset.lenderKey;const l=allL.find(x=>x.key===lk);if(l&&!l.portal&&l.to)highlighted.push(l);});
+  if(!highlighted.length){alert('No emailable lenders highlighted.');return;}
+  const newToSend=highlighted.filter(l=>!d.emailedLenders.includes(l.key));const alreadyE=highlighted.filter(l=>d.emailedLenders.includes(l.key));
+  if(!newToSend.length){alert(`All ${alreadyE.length} highlighted lenders already emailed. Use Force Re-send.`);return;}
+  const ef=d.emailFields||{};const subject=ef.subject||'***New Deal*** - ';const status=ef.status||'';const biz=d.fields?.business||'';
+  if(!biz){alert('Fill in Business Name first.');return;}if(!status){alert('Fill in Status field.');return;}
+  const token=await ensureToken();if(!token){alert('Sign in with Microsoft first.');return;}
+  const skipMsg=alreadyE.length?` (skipping ${alreadyE.length} already emailed)`:'';
+  if(!confirm(`Send ${newToSend.length} emails from ${signedInUser.username}?${skipMsg}`))return;
+  const industry=d.fields?.industry||'';const balances=ef.balances||'';const notes=ef.notes||'';
+  let body=`***New Deal*** - ${biz}<br><br><b><u>Status:</u></b> ${status}<br><br>`;
+  if(industry)body+=`<b><u>Industry:</u></b> ${industry}<br><br>`;
+  if(balances)body+=`<b><u>Current Balances:</u></b><br>${balances.replace(/\n/g,'<br>')}<br><br>`;
+  if(notes)body+=`<b><u>Notes:</u></b><br>${notes.replace(/\n/g,'<br>')}<br><br>`;
+  body+=`<br><br><span style="font-size:14pt;font-weight:bold;">Gotham Capital</span><br><span style="font-size:12pt;font-style:italic;">Submissions</span><br><br>40 Wall St., New York, NY 10005<br>gothamcapitalfunding.com<br><br><span style="font-size:9pt;font-style:italic;">CONFIDENTIALITY NOTICE: The contents of this email message and any attachments are intended solely for the addressee(s) and may contain confidential and/or privileged information and may be legally protected from disclosure. If you are not the intended recipient of this message or their agent, or if this message has been addressed to you in error, please immediately alert the sender by reply email and then delete this message and any attachments. If you are not the intended recipient, you are hereby notified that any use, dissemination, copying, or storage of this message or its attachments is strictly prohibited. Disclaimer: This e-mail message has been sent to you by an independent contractor of RJ Marketing Group Inc, DBA Gotham Capital. ("GC"). The sender of this message is not authorized to exceed the scope of their authority, in the limited capacity in which they serve as an independent contractor of GC, and any information transmitted by the sender in violation of same, is not endorsed by GC, nor does it reflect the position, statements, or opinions of GC. GC assumes no liability for the contents of this e-mail.</span>`;
+  const files=dealFiles[id]||[];let attachments=[];if(files.length)attachments=await Promise.all(files.map(fileToAttachment));
+  const addCC=ef.cc?ef.cc.split(',').map(e=>e.trim()).filter(e=>e):[];
+  const sendBtn=document.getElementById('send-btn-'+id),ps=document.getElementById('progress-'+id),pf=document.getElementById('pf-'+id),pt=document.getElementById('pt-'+id),rd=document.getElementById('send-results-'+id);
+  sendBtn.disabled=true;ps.style.display='block';rd.innerHTML='';
+  let success=0;const failed=[];
+  for(let i=0;i<newToSend.length;i++){
+    const l=newToSend[i];const pct=Math.round(((i+1)/newToSend.length)*100);pf.style.width=pct+'%';pf.textContent=pct+'%';pt.textContent=`Sending to ${l.name}... (${i+1}/${newToSend.length})`;
+    const allCC=[...(l.cc||[]),JASON_EMAIL,...addCC];
+    try{await sendOneEmail(l.to,allCC,subject,body,attachments,token);success++;if(!d.emailedLenders.includes(l.key))d.emailedLenders.push(l.key);}
+    catch(err){if(err.message&&err.message.includes('429')){pt.textContent=`Rate limited — retrying ${l.name}...`;await sleep(3000);try{const ft=await ensureToken();await sendOneEmail(l.to,allCC,subject,body,attachments,ft||token);success++;if(!d.emailedLenders.includes(l.key))d.emailedLenders.push(l.key);}catch(e2){failed.push(l.name);}}else if(err.message&&err.message.includes('401')){const ft=await ensureToken();if(ft){try{await sendOneEmail(l.to,allCC,subject,body,attachments,ft);success++;if(!d.emailedLenders.includes(l.key))d.emailedLenders.push(l.key);}catch(e3){failed.push(l.name);}}else failed.push(l.name);}else failed.push(l.name);}
+    if(i<newToSend.length-1)await sleep(2000);
   }
-
-  // Additional CC
-  const additionalCC = ef.cc ? ef.cc.split(',').map(e => e.trim()).filter(e => e) : [];
-
-  // Show progress
-  const sendBtn = document.getElementById('send-btn-' + id);
-  const progressSection = document.getElementById('progress-' + id);
-  const pf = document.getElementById('pf-' + id);
-  const pt = document.getElementById('pt-' + id);
-  const resultsDiv = document.getElementById('send-results-' + id);
-  sendBtn.disabled = true;
-  progressSection.style.display = 'block';
-  resultsDiv.innerHTML = '';
-
-  let success = 0;
-  const failed = [];
-
-  for (let i = 0; i < newToSend.length; i++) {
-    const lender = newToSend[i];
-    const percent = Math.round(((i+1)/newToSend.length)*100);
-    pf.style.width = percent + '%';
-    pf.textContent = percent + '%';
-    pt.textContent = `Sending to ${lender.name}... (${i+1}/${newToSend.length})`;
-
-    const allCC = [...(lender.cc||[]), JASON_EMAIL, ...additionalCC];
-
-    try {
-      await sendOneEmail(lender.to, allCC, subject, body, attachments, token);
-      success++;
-      // Track as emailed
-      if (!d.emailedLenders.includes(lender.key)) d.emailedLenders.push(lender.key);
-    } catch(err) {
-      console.error(`Failed ${lender.name}:`, err);
-      if (err.message && err.message.includes('429')) {
-        pt.textContent = `Rate limited — retrying ${lender.name}...`;
-        await sleep(3000);
-        try {
-          const freshToken = await ensureToken();
-          await sendOneEmail(lender.to, allCC, subject, body, attachments, freshToken || token);
-          success++;
-          if (!d.emailedLenders.includes(lender.key)) d.emailedLenders.push(lender.key);
-        } catch(e2) { failed.push(lender.name); }
-      } else if (err.message && err.message.includes('401')) {
-        const freshToken = await ensureToken();
-        if (freshToken) {
-          try {
-            await sendOneEmail(lender.to, allCC, subject, body, attachments, freshToken);
-            success++;
-            if (!d.emailedLenders.includes(lender.key)) d.emailedLenders.push(lender.key);
-          } catch(e3) { failed.push(lender.name); }
-        } else { failed.push(lender.name); }
-      } else {
-        failed.push(lender.name);
-      }
-    }
-
-    if (i < newToSend.length - 1) await sleep(2000);
-  }
-
-  // Save emailed lenders list
-  persist();
-
-  // Results
-  pt.textContent = 'Complete!';
-  sendBtn.disabled = false;
-
-  if (failed.length === 0) {
-    resultsDiv.innerHTML = `<div class="send-results success">All ${success} emails sent successfully!${skipMsg}</div>`;
-  } else {
-    resultsDiv.innerHTML = `<div class="send-results partial">Sent ${success} of ${newToSend.length} emails.${skipMsg}<div class="failed-list">Failed: ${failed.join(', ')}</div></div>`;
-  }
-
-  // Re-render to show EMAILED badges
-  setTimeout(() => {
-    progressSection.style.display = 'none';
-    pf.style.width = '0%';
-    pf.textContent = '0%';
-    renderDealView(id);
-  }, 3000);
+  persist();pt.textContent='Complete!';sendBtn.disabled=false;
+  rd.innerHTML=failed.length===0?`<div class="send-results success">All ${success} emails sent!${skipMsg}</div>`:`<div class="send-results partial">Sent ${success} of ${newToSend.length}.${skipMsg}<div class="failed-list">Failed: ${failed.join(', ')}</div></div>`;
+  setTimeout(()=>{ps.style.display='none';pf.style.width='0%';pf.textContent='0%';renderDealView(id);},3000);
 }
+async function sendOneEmail(to,cc,subject,body,att,token){const msg={message:{subject,body:{contentType:'HTML',content:body},toRecipients:[{emailAddress:{address:to}}],ccRecipients:cc.map(e=>({emailAddress:{address:e}}))}};if(att.length)msg.message.attachments=att;const r=await fetch('https://graph.microsoft.com/v1.0/me/sendMail',{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(msg)});if(!r.ok)throw new Error(`${r.status}`);}
+function fileToAttachment(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res({'@odata.type':'#microsoft.graph.fileAttachment',name:file.name,contentBytes:r.result.split(',')[1]});r.onerror=rej;r.readAsDataURL(file);});}
 
-async function sendOneEmail(to, cc, subject, body, attachments, token) {
-  const message = {
-    message: {
-      subject: subject,
-      body: { contentType: 'HTML', content: body },
-      toRecipients: [{ emailAddress: { address: to } }],
-      ccRecipients: cc.map(email => ({ emailAddress: { address: email } }))
-    }
-  };
-  if (attachments.length) message.message.attachments = attachments;
-  const response = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(message)
-  });
-  if (!response.ok) {
-    throw new Error(`${response.status} - ${response.statusText}`);
-  }
-}
+// Rep management
+function manageReps(){const ex=document.getElementById('reps-overlay');if(ex)ex.remove();const o=document.createElement('div');o.className='reps-overlay';o.id='reps-overlay';o.innerHTML=`<div class="reps-box"><h3>Manage Reps</h3><div class="rep-list-manage">${reps.map((r,i)=>`<div class="rep-row"><span>${esc(r)}</span><button class="btn btn-danger btn-sm" onclick="removeRep(${i})">Remove</button></div>`).join('')}${!reps.length?'<p style="font-size:12px;color:var(--text-muted);padding:10px 0;">No reps added yet.</p>':''}</div><div class="add-rep-row"><input id="new-rep-name" placeholder="Rep name" onkeydown="if(event.key==='Enter')addRep()"><button class="btn btn-primary btn-sm" onclick="addRep()">Add</button></div><div style="margin-top:16px;text-align:right;"><button class="btn" onclick="closeRepsOverlay()">Done</button></div></div>`;document.body.appendChild(o);document.getElementById('new-rep-name').focus();}
+function addRep(){const inp=document.getElementById('new-rep-name');const n=inp.value.trim();if(!n)return;if(reps.includes(n)){toast('Rep exists');return;}reps.push(n);persist();manageReps();renderAll();}
+function removeRep(i){const n=reps[i];if(!confirm(`Remove ${n}?`))return;reps.splice(i,1);Object.values(deals).forEach(d=>{if(d.rep===n)d.rep='';});persist();manageReps();renderAll();}
+function closeRepsOverlay(){const o=document.getElementById('reps-overlay');if(o)o.remove();}
 
-function fileToAttachment(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve({ '@odata.type': '#microsoft.graph.fileAttachment', name: file.name, contentBytes: reader.result.split(',')[1] });
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-/* ============================================================
-   CONTEXT MENU
-   ============================================================ */
-function setLenderState(state) {
-  if (!ctxTarget) return;
-  const { tr, dealId } = ctxTarget;
-
-  if (state === 'approved') {
-    hideCtx();
-    showApprovalPopup(tr, dealId);
-    return;
-  }
-
-  if (state === 'funded') {
-    hideCtx();
-    showFundedPopup(tr, dealId);
-    return;
-  }
-
-  tr.classList.remove('sent','approved','declined','funded');
-  if (state) tr.classList.add(state);
-
-  // If clearing, also remove approval/funded data
-  if (!state) {
-    const d = deals[dealId];
-    if (d) {
-      if (d.approvalData) delete d.approvalData[tr.dataset.lenderKey];
-      if (d.fundedData) delete d.fundedData[tr.dataset.lenderKey];
-    }
-  }
-
-  saveDealFromDOM(dealId);
-  renderSidebar();
-  hideCtx();
-}
-
-function forceResend() {
-  if (!ctxTarget) return;
-  const { tr, dealId } = ctxTarget;
-  const lk = tr.dataset.lenderKey;
-  const d = deals[dealId];
-  if (d) {
-    // Remove from emailedLenders so it gets picked up on next send
-    d.emailedLenders = (d.emailedLenders || []).filter(k => k !== lk);
-    // Set back to sent state
-    tr.classList.remove('approved','declined','funded');
-    tr.classList.add('sent');
-    saveDealFromDOM(dealId);
-    // Re-render to update badge
-    renderDealView(dealId);
-    toast('Lender marked for re-send');
-  }
-  hideCtx();
-}
-
-function showApprovalPopup(tr, dealId) {
-  const lk = tr.dataset.lenderKey;
-  const d = deals[dealId];
-  const existing = d?.approvalData?.[lk] || {};
-  // Find lender name
-  const allLendersFlat = [];
-  Object.entries(LENDERS).forEach(([risk, list]) => {
-    list.forEach((l, i) => { allLendersFlat.push({ ...l, key: `${risk}-${i}` }); });
-  });
-  const lender = allLendersFlat.find(l => l.key === lk);
-  const lenderName = lender ? lender.name : lk;
-  const bizName = d?.fields?.business || 'Untitled Deal';
-
-  const overlay = document.createElement('div');
-  overlay.className = 'approval-overlay';
-  overlay.id = 'approval-overlay';
-  overlay.innerHTML = `<div class="approval-box">
-    <h3>${esc(lenderName)} — Approved</h3>
-    <div class="approval-sub">${esc(bizName)}</div>
-    <div class="approval-grid">
-      <div class="field"><label>Amount</label><input id="appr-amount" placeholder="$50,000" value="${esc(existing.amount||'')}"></div>
-      <div class="field"><label>Term</label><input id="appr-term" placeholder="6 months" value="${esc(existing.term||'')}"></div>
-      <div class="field"><label>Rate / Factor</label><input id="appr-rate" placeholder="1.35" value="${esc(existing.rate||'')}"></div>
-      <div class="field"><label>Payment</label><input id="appr-payment" placeholder="$2,250/day" value="${esc(existing.payment||'')}"></div>
-    </div>
-    <div class="approval-btns">
-      <button class="btn" onclick="cancelApproval()">Cancel</button>
-      <button class="btn btn-approve" onclick="saveApproval('${dealId}','${lk}')">Save Approval</button>
-    </div>
-  </div>`;
-  document.body.appendChild(overlay);
-  document.getElementById('appr-amount').focus();
-  // Store ref to the TR
-  overlay._tr = tr;
-}
-
-function saveApproval(dealId, lk) {
-  const d = deals[dealId];
-  if (!d) return;
-  d.approvalData = d.approvalData || {};
-  d.approvalData[lk] = {
-    amount: document.getElementById('appr-amount').value.trim(),
-    term: document.getElementById('appr-term').value.trim(),
-    rate: document.getElementById('appr-rate').value.trim(),
-    payment: document.getElementById('appr-payment').value.trim()
-  };
-
-  // Set the lender state to approved
-  const overlay = document.getElementById('approval-overlay');
-  if (overlay && overlay._tr) {
-    overlay._tr.classList.remove('sent','declined');
-    overlay._tr.classList.add('approved');
-  }
-
-  cancelApproval();
-  saveDealFromDOM(dealId);
-  renderSidebar();
-}
-
-function cancelApproval() {
-  const overlay = document.getElementById('approval-overlay');
-  if (overlay) overlay.remove();
-}
-
-function showFundedPopup(tr, dealId) {
-  const lk = tr.dataset.lenderKey;
-  const d = deals[dealId];
-  const existing = d?.fundedData?.[lk] || {};
-  const allLendersFlat = [];
-  Object.entries(LENDERS).forEach(([risk, list]) => {
-    list.forEach((l, i) => { allLendersFlat.push({ ...l, key: `${risk}-${i}` }); });
-  });
-  const lender = allLendersFlat.find(l => l.key === lk);
-  const lenderName = lender ? lender.name : lk;
-  const bizName = d?.fields?.business || 'Untitled Deal';
-
-  const overlay = document.createElement('div');
-  overlay.className = 'funded-overlay';
-  overlay.id = 'funded-overlay';
-  overlay.innerHTML = `<div class="funded-box">
-    <h3>${esc(lenderName)} — Funded</h3>
-    <div class="funded-sub">${esc(bizName)}</div>
-    <div class="funded-grid">
-      <div class="field"><label>Amount</label><input id="fund-amount" placeholder="$50,000" value="${esc(existing.amount||'')}"></div>
-      <div class="field"><label>Term</label><input id="fund-term" placeholder="6 months" value="${esc(existing.term||'')}"></div>
-      <div class="field"><label>Rate / Factor</label><input id="fund-rate" placeholder="1.35" value="${esc(existing.rate||'')}"></div>
-      <div class="field"><label>Points</label><input id="fund-points" placeholder="10%" value="${esc(existing.points||'')}"></div>
-    </div>
-    <div class="funded-full">
-      <div class="field"><label>Total Commission</label><input id="fund-commission" placeholder="$5,000" value="${esc(existing.commission||'')}"></div>
-    </div>
-    <div class="approval-btns">
-      <button class="btn" onclick="cancelFunded()">Cancel</button>
-      <button class="btn btn-funded" onclick="saveFunded('${dealId}','${lk}')">Save Funded Deal</button>
-    </div>
-  </div>`;
-  document.body.appendChild(overlay);
-  document.getElementById('fund-amount').focus();
-  overlay._tr = tr;
-}
-
-function saveFunded(dealId, lk) {
-  const d = deals[dealId];
-  if (!d) return;
-  d.fundedData = d.fundedData || {};
-  d.fundedData[lk] = {
-    amount: document.getElementById('fund-amount').value.trim(),
-    term: document.getElementById('fund-term').value.trim(),
-    rate: document.getElementById('fund-rate').value.trim(),
-    points: document.getElementById('fund-points').value.trim(),
-    commission: document.getElementById('fund-commission').value.trim()
-  };
-
-  const overlay = document.getElementById('funded-overlay');
-  if (overlay && overlay._tr) {
-    overlay._tr.classList.remove('sent','approved','declined');
-    overlay._tr.classList.add('funded');
-  }
-
-  cancelFunded();
-  saveDealFromDOM(dealId);
-  renderSidebar();
-  renderTabBar();
-}
-
-function cancelFunded() {
-  const overlay = document.getElementById('funded-overlay');
-  if (overlay) overlay.remove();
-}
-
-function hideCtx() { document.getElementById('ctx-menu').classList.remove('show'); ctxTarget = null; }
-document.addEventListener('click', (e) => { if (!document.getElementById('ctx-menu').contains(e.target)) hideCtx(); });
-document.addEventListener('keydown', (e) => { if (e.key==='Escape') hideCtx(); });
-
-/* ============================================================
-   REP MANAGEMENT
-   ============================================================ */
-function manageReps() {
-  const existing = document.getElementById('reps-overlay');
-  if (existing) existing.remove();
-  const overlay = document.createElement('div');
-  overlay.className = 'reps-overlay';
-  overlay.id = 'reps-overlay';
-  overlay.innerHTML = `<div class="reps-box"><h3>Manage Reps</h3><div class="rep-list-manage" id="rep-list-manage">${reps.map((r,i)=>`<div class="rep-row"><span>${esc(r)}</span><button class="btn btn-danger btn-sm" onclick="removeRep(${i})">Remove</button></div>`).join('')}${!reps.length?'<p style="font-size:12px;color:var(--text-muted);padding:10px 0;">No reps added yet.</p>':''}</div><div class="add-rep-row"><input id="new-rep-name" placeholder="Rep name" onkeydown="if(event.key==='Enter')addRep()"><button class="btn btn-primary btn-sm" onclick="addRep()">Add</button></div><div style="margin-top:16px;text-align:right;"><button class="btn" onclick="closeRepsOverlay()">Done</button></div></div>`;
-  document.body.appendChild(overlay);
-  document.getElementById('new-rep-name').focus();
-}
-function addRep() { const input=document.getElementById('new-rep-name'); const name=input.value.trim(); if(!name)return; if(reps.includes(name)){toast('Rep already exists');return;} reps.push(name); persist(); manageReps(); renderRepTabs(); renderSidebar(); if(activeView==='dashboard')renderDashboard(); }
-function removeRep(idx) { const name=reps[idx]; if(!confirm(`Remove ${name}?`))return; reps.splice(idx,1); Object.values(deals).forEach(d=>{if(d.rep===name)d.rep='';}); persist(); manageReps(); renderRepTabs(); renderSidebar(); if(activeView==='dashboard')renderDashboard(); }
-function closeRepsOverlay() { const o=document.getElementById('reps-overlay'); if(o)o.remove(); }
-
-/* ============================================================
-   HELPERS
-   ============================================================ */
-function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function toast(msg, isError) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = isError ? 'toast error show' : 'toast show';
-  setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-/* ============================================================
-   INIT
-   ============================================================ */
+// Init
 loadLocal();
-loadFromFirebase(() => {
-  renderRepTabs();
-  renderSidebar();
-  renderTabBar();
-  if (activeView === 'funded') renderFundedView();
-  else if (activeView !== 'dashboard' && deals[activeView]) renderDealView(activeView);
-  else showDashboard();
-});
+loadFromFirebase(()=>{renderAll();});
 
-// Real-time Firebase listener
-(function startFirebaseListener() {
-  if (!firebaseUrl) return;
-  const evtSource = new EventSource(firebaseUrl + '/.json?auth=');
-  // Use polling as fallback since Firebase REST SSE requires auth for streaming
-  setInterval(() => {
-    if (!firebaseUrl) return;
-    fetch(firebaseUrl + '/deals.json').then(r => r.json()).then(data => {
-      if (!data || typeof data !== 'object') return;
-      let changed = false;
-      // Check for new or updated deals from other users
-      Object.keys(data).forEach(k => {
-        const remote = JSON.stringify(data[k]);
-        const local = JSON.stringify(deals[k]);
-        if (remote !== local) { deals[k] = data[k]; changed = true; }
-      });
-      // Check for deleted deals
-      Object.keys(deals).forEach(k => {
-        if (!data[k]) { delete deals[k]; changed = true; }
-      });
-      if (changed) {
-        saveLocal();
-        renderRepTabs();
-        renderSidebar();
-        renderTabBar();
-        if (activeView === 'dashboard') renderDashboard();
-        else if (activeView === 'funded') renderFundedView();
-      }
-    }).catch(() => {});
-    // Also poll reps
-    fetch(firebaseUrl + '/reps.json').then(r => r.json()).then(data => {
-      if (Array.isArray(data) && JSON.stringify(data) !== JSON.stringify(reps)) {
-        reps = data;
-        saveLocal();
-        renderRepTabs();
-        if (activeView === 'dashboard') renderDashboard();
-      }
-    }).catch(() => {});
-  }, 5000); // Poll every 5 seconds
-})();
+// Polling
+setInterval(()=>{if(!firebaseUrl)return;
+  fetch(firebaseUrl+'/deals.json').then(r=>r.json()).then(data=>{if(!data||typeof data!=='object')return;let ch=false;
+    Object.keys(data).forEach(k=>{if(recentlyDeleted.has(k))return;if(JSON.stringify(data[k])!==JSON.stringify(deals[k])){deals[k]=data[k];ch=true;}});
+    Object.keys(deals).forEach(k=>{if(!data[k]&&!recentlyDeleted.has(k)){delete deals[k];ch=true;}});
+    if(ch){saveLocal();renderAll();}
+  }).catch(()=>{});
+  fetch(firebaseUrl+'/reps.json').then(r=>r.json()).then(data=>{if(Array.isArray(data)&&JSON.stringify(data)!==JSON.stringify(reps)){reps=data;saveLocal();renderAll();}}).catch(()=>{});
+},5000);
 </script>
 </body>
 </html>
