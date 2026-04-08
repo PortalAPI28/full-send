@@ -305,7 +305,7 @@ const MONTHS=['January','February','March','April','May','June','July','August',
 const msalConfig={auth:{clientId:'7fdbb596-abb9-44a3-92df-dee7afb70632',authority:'https://login.microsoftonline.com/ec4a3ddf-5ebc-44ad-904a-3eed2baff0e3',redirectUri:window.location.origin+window.location.pathname}};
 const msalInstance=new msal.PublicClientApplication(msalConfig);
 
-let deals={},reps=[],selectedRep=null,activeView='dashboard',firebaseUrl='https://submissions-tracker-db9ac-default-rtdb.firebaseio.com',ctxTarget=null,accessToken=null,signedInUser=null,dealFiles={},recentlyDeleted=new Set(),expandedReps={},selectedMonth=null;
+let deals={},reps=[],selectedRep=null,activeView='dashboard',lastTab='dashboard',firebaseUrl='https://submissions-tracker-db9ac-default-rtdb.firebaseio.com',ctxTarget=null,accessToken=null,signedInUser=null,dealFiles={},recentlyDeleted=new Set(),expandedReps={},selectedMonth=null;
 
 const LS_KEY='gotham_deals',LS_VIEW='gotham_active_view',LS_REPS='gotham_reps';
 function loadLocal(){try{const r=localStorage.getItem(LS_KEY);if(r)deals=JSON.parse(r);const v=localStorage.getItem(LS_VIEW);if(v)activeView=v;const rr=localStorage.getItem(LS_REPS);if(rr)reps=JSON.parse(rr);}catch(e){}}
@@ -349,23 +349,36 @@ function createDeal(){const d=newDealData();deals[d.id]=d;activeView=d.id;persis
 function deleteDeal(id){if(!confirm('Delete this deal permanently?'))return;recentlyDeleted.add(id);delete deals[id];delete dealFiles[id];if(activeView===id)activeView='dashboard';saveLocal();deleteDealFromFirebase(id).then(()=>{toast('Deal deleted');}).catch(()=>{toast('Delete failed',true);});renderAll();}
 
 // Tab bar
-function renderTabBar(){document.getElementById('tab-bar').innerHTML=['dashboard','funded','omns','monthly'].map(v=>{const labels={dashboard:'Dashboard',funded:'Funded',omns:'OMNS',monthly:'Monthly'};return`<div class="tab-dash${activeView===v?' active':''}" onclick="showView('${v}')">${labels[v]}</div>`;}).join('');}
+function renderTabBar(){const ctx=['dashboard','funded','omns','monthly'].includes(activeView)?activeView:lastTab;document.getElementById('tab-bar').innerHTML=['dashboard','funded','omns','monthly'].map(v=>{const labels={dashboard:'Dashboard',funded:'Funded',omns:'OMNS',monthly:'Monthly'};return`<div class="tab-dash${ctx===v?' active':''}" onclick="showView('${v}')">${labels[v]}</div>`;}).join('');}
 
-function showView(v){if(activeView!=='dashboard'&&activeView!=='funded'&&activeView!=='omns'&&activeView!=='monthly'&&deals[activeView])saveDealFromDOM(activeView);activeView=v;saveLocal();renderAll();if(v==='dashboard')renderDashboard();else if(v==='funded')renderFundedView();else if(v==='omns')renderOMNSView();else if(v==='monthly')renderMonthlyView();}
+function showView(v){if(activeView!=='dashboard'&&activeView!=='funded'&&activeView!=='omns'&&activeView!=='monthly'&&deals[activeView])saveDealFromDOM(activeView);activeView=v;lastTab=v;saveLocal();renderAll();if(v==='dashboard')renderDashboard();else if(v==='funded')renderFundedView();else if(v==='omns')renderOMNSView();else if(v==='monthly')renderMonthlyView();}
 function openDeal(id){if(activeView!=='dashboard'&&activeView!=='funded'&&activeView!=='omns'&&activeView!=='monthly'&&deals[activeView])saveDealFromDOM(activeView);activeView=id;saveLocal();renderTabBar();renderSidebar();renderDealView(id);}
 
-// Sidebar with collapsible rep folders
+// Sidebar — context-aware per tab
+function getSidebarDeals(){
+  const ctx=['dashboard','funded','omns','monthly'].includes(activeView)?activeView:lastTab;
+  if(ctx==='funded')return getFundedDeals();
+  if(ctx==='omns')return getOMNSDeals();
+  if(ctx==='monthly'){
+    const now=new Date();const yr=now.getFullYear();
+    if(selectedMonth===null)selectedMonth=now.getMonth();
+    return Object.values(deals).filter(d=>getDealMonth(d)===selectedMonth&&getDealYear(d)===yr).sort((a,b)=>b.created.localeCompare(a.created));
+  }
+  // Dashboard or deal view from dashboard context
+  return getActiveDeals();
+}
+
 function renderSidebar(){
   const list=document.getElementById('deal-list');
-  const active=getActiveDeals();
+  const sidebarDeals=getSidebarDeals();
   const byRep={};
   reps.forEach(r=>{byRep[r]=[];});
   byRep['__unassigned__']=[];
-  active.forEach(d=>{const r=d.rep||'__unassigned__';if(!byRep[r])byRep[r]=[];byRep[r].push(d);});
-  // Filter by selectedRep
+  sidebarDeals.forEach(d=>{const r=d.rep||'__unassigned__';if(!byRep[r])byRep[r]=[];byRep[r].push(d);});
+  
   let html='';
-  // "All" button
-  html+=`<div class="rep-folder-header${!selectedRep?' active':''}" onclick="selectRep(null)" style="margin-bottom:4px;"><span style="font-size:11px;">All</span><span class="rep-cnt">${active.length}</span></div>`;
+  // "All" header
+  html+=`<div class="rep-folder-header${!selectedRep?' active':''}" onclick="selectRep(null)" style="margin-bottom:4px;"><span style="font-size:11px;">All</span><span class="rep-cnt">${sidebarDeals.length}</span></div>`;
   // Rep folders
   reps.forEach(r=>{
     const rd=byRep[r]||[];
@@ -385,16 +398,25 @@ function renderSidebar(){
     un.forEach(d=>{html+=dealItemHTML(d);});
     html+=`</div></div>`;
   }
-  list.innerHTML=html||'<div class="empty-state" style="padding:30px 10px;"><p style="font-size:12px;">No active deals</p></div>';
+  list.innerHTML=html||'<div class="empty-state" style="padding:30px 10px;"><p style="font-size:12px;">No deals</p></div>';
 }
 function dealItemHTML(d){
   const pips=getDealPips(d);const isActive=activeView===d.id;
-  return`<div class="deal-item${isActive?' active':''}" onclick="openDeal('${d.id}')"><div style="flex:1;overflow:hidden;"><div class="deal-biz">${esc(getDealLabel(d))}</div><div style="display:flex;align-items:center;gap:6px;margin-top:2px;"><span style="font-size:9px;color:var(--text-muted);font-family:var(--mono);">${d.fields?.date||''}</span>${pips.sent?`<span class="deal-pip pip-y">${pips.sent}</span>`:''}${pips.approved?`<span class="deal-pip pip-b">${pips.approved}</span>`:''}${pips.declined?`<span class="deal-pip pip-r">${pips.declined}</span>`:''}</div></div><span class="deal-close" onclick="event.stopPropagation();deleteDeal('${d.id}')">&times;</span></div>`;
+  let pipHtml='';
+  if(pips.sent)pipHtml+=`<span class="deal-pip pip-y">${pips.sent}S</span>`;
+  if(pips.approved)pipHtml+=`<span class="deal-pip pip-b">${pips.approved}A</span>`;
+  if(pips.declined)pipHtml+=`<span class="deal-pip pip-r">${pips.declined}D</span>`;
+  if(pips.funded)pipHtml+=`<span class="deal-pip pip-g">${pips.funded}F</span>`;
+  if(pips.omns)pipHtml+=`<span class="deal-pip" style="background:rgba(219,109,40,0.10);color:var(--orange);">${pips.omns}O</span>`;
+  return`<div class="deal-item${isActive?' active':''}" onclick="openDeal('${d.id}')"><div style="flex:1;overflow:hidden;"><div class="deal-biz">${esc(getDealLabel(d))}</div><div style="display:flex;align-items:center;gap:6px;margin-top:2px;"><span style="font-size:9px;color:var(--text-muted);font-family:var(--mono);">${d.fields?.date||''}</span>${pipHtml}</div></div><span class="deal-close" onclick="event.stopPropagation();deleteDeal('${d.id}')">&times;</span></div>`;
 }
 function toggleRep(r){expandedReps[r]=!expandedReps[r];renderSidebar();}
 function selectRep(r){selectedRep=r;renderSidebar();if(['dashboard','funded','omns','monthly'].includes(activeView)){renderTabBar();if(activeView==='dashboard')renderDashboard();else if(activeView==='funded')renderFundedView();else if(activeView==='omns')renderOMNSView();else if(activeView==='monthly')renderMonthlyView();}}
 
 function renderAll(){renderTabBar();renderSidebar();const v=activeView;if(v==='dashboard')renderDashboard();else if(v==='funded')renderFundedView();else if(v==='omns')renderOMNSView();else if(v==='monthly')renderMonthlyView();else if(deals[v])renderDealView(v);else{activeView='dashboard';renderTabBar();renderDashboard();}}
+
+// Light render for polling — updates sidebar+tabs without touching deal view (prevents focus loss)
+function renderChrome(){renderTabBar();renderSidebar();if(activeView==='dashboard')renderDashboard();else if(activeView==='funded')renderFundedView();else if(activeView==='omns')renderOMNSView();else if(activeView==='monthly')renderMonthlyView();}
 
 // Dashboard
 function renderDashboard(){
@@ -422,7 +444,10 @@ function renderDashboard(){
 
 // Funded view
 function renderFundedView(){
-  const c=document.getElementById('content');const fd=getFundedDeals();const lf=getAllLendersFlat();const entries=[];
+  const c=document.getElementById('content');let fd=getFundedDeals();
+  if(selectedRep==='__unassigned__')fd=fd.filter(d=>!d.rep);
+  else if(selectedRep)fd=fd.filter(d=>d.rep===selectedRep);
+  const lf=getAllLendersFlat();const entries=[];
   fd.forEach(d=>{if(!d.lenderStates||!d.fundedData)return;Object.entries(d.lenderStates).forEach(([lk,st])=>{if(st==='funded'&&d.fundedData[lk]){const f=d.fundedData[lk];const l=lf.find(x=>x.key===lk);entries.push({biz:d.fields?.business||'—',ln:l?l.name:lk,amt:f.amount||'',term:f.term||'',rate:f.rate||'',pts:f.points||'',comm:f.commission||'',rep:d.rep||'—',did:d.id});}});});
   let totF=0,totC=0;entries.forEach(e=>{const a=parseFloat((e.amt||'').replace(/[^0-9.]/g,''));if(!isNaN(a))totF+=a;const co=parseFloat((e.comm||'').replace(/[^0-9.]/g,''));if(!isNaN(co))totC+=co;});
   c.innerHTML=`<div class="dash"><div class="dash-hero"><h2>Funded Deals</h2><p>Deals that have closed and funded.</p></div><div class="stats-row"><div class="stat-card"><div class="stat-val stat-green">$${Math.round(totF).toLocaleString()}</div><div class="stat-label">Total Funded</div></div><div class="stat-card"><div class="stat-val stat-green">${entries.length}</div><div class="stat-label">Deals Funded</div></div><div class="stat-card"><div class="stat-val stat-green">$${Math.round(totC).toLocaleString()}</div><div class="stat-label">Total Commission</div></div></div>${entries.length?`<div class="section"><div class="section-title">Funded Details</div><table class="dash-table"><thead><tr><th>Business</th><th>Lender</th><th>Amount</th><th>Term</th><th>Rate</th><th>Pts</th><th>Commission</th><th>Rep</th></tr></thead><tbody>${entries.map(e=>`<tr onclick="openDeal('${e.did}')"><td class="dt-biz">${esc(e.biz)}</td><td style="font-size:12px;">${esc(e.ln)}</td><td style="font-family:var(--mono);font-size:12px;color:var(--green);font-weight:600;">${esc(e.amt)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(e.term)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(e.rate)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(e.pts)}</td><td style="font-family:var(--mono);font-size:12px;color:var(--green);font-weight:600;">${esc(e.comm)}</td><td style="font-size:12px;color:var(--accent);">${esc(e.rep)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty-state"><h3>No funded deals yet</h3></div>'}</div>`;
@@ -430,7 +455,10 @@ function renderFundedView(){
 
 // OMNS view
 function renderOMNSView(){
-  const c=document.getElementById('content');const od=getOMNSDeals();const lf=getAllLendersFlat();const entries=[];
+  const c=document.getElementById('content');let od=getOMNSDeals();
+  if(selectedRep==='__unassigned__')od=od.filter(d=>!d.rep);
+  else if(selectedRep)od=od.filter(d=>d.rep===selectedRep);
+  const lf=getAllLendersFlat();const entries=[];
   od.forEach(d=>{if(!d.lenderStates||!d.omnsData)return;Object.entries(d.lenderStates).forEach(([lk,st])=>{if(st==='omns'&&d.omnsData[lk]){const o=d.omnsData[lk];const l=lf.find(x=>x.key===lk);entries.push({biz:d.fields?.business||'—',ln:l?l.name:lk,amt:o.amount||'',term:o.term||'',rate:o.rate||'',pay:o.payment||'',reason:o.reason||'',rep:d.rep||'—',did:d.id});}});});
   c.innerHTML=`<div class="dash"><div class="dash-hero"><h2>Offers Made Not Sold</h2><p>Approved deals the client did not accept.</p></div><div class="stats-row"><div class="stat-card"><div class="stat-val" style="color:var(--orange);">${entries.length}</div><div class="stat-label">Total OMNS</div></div></div>${entries.length?`<div class="section"><div class="section-title">OMNS Details</div><table class="dash-table"><thead><tr><th>Business</th><th>Lender</th><th>Amount</th><th>Term</th><th>Rate</th><th>Payment</th><th>Reason</th><th>Rep</th></tr></thead><tbody>${entries.map(e=>`<tr onclick="openDeal('${e.did}')"><td class="dt-biz">${esc(e.biz)}</td><td style="font-size:12px;">${esc(e.ln)}</td><td style="font-family:var(--mono);font-size:12px;color:var(--orange);font-weight:600;">${esc(e.amt)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(e.term)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(e.rate)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(e.pay)}</td><td style="font-size:12px;color:var(--orange);">${esc(e.reason)}</td><td style="font-size:12px;color:var(--accent);">${esc(e.rep)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty-state"><h3>No OMNS deals yet</h3></div>'}</div>`;
 }
@@ -438,14 +466,24 @@ function renderOMNSView(){
 // Monthly view
 function renderMonthlyView(){
   const c=document.getElementById('content');const now=new Date();if(selectedMonth===null)selectedMonth=now.getMonth();const yr=now.getFullYear();
-  const allDeals=Object.values(deals);
-  const monthDeals=allDeals.filter(d=>{const m=getDealMonth(d),y=getDealYear(d);return m===selectedMonth&&y===yr;});
-  let fDeals=monthDeals.filter(d=>selectedRep?d.rep===selectedRep:true);
+  // Get ALL deals for this month (active, funded, omns — everything)
+  let monthDeals=Object.values(deals).filter(d=>{const m=getDealMonth(d),y=getDealYear(d);return m===selectedMonth&&y===yr;});
+  // Apply rep filter
+  if(selectedRep==='__unassigned__')monthDeals=monthDeals.filter(d=>!d.rep);
+  else if(selectedRep)monthDeals=monthDeals.filter(d=>d.rep===selectedRep);
+  
   let ts=0,ta=0,td2=0,tf=0,to=0,totFAmt=0,totComm=0;
-  const lf=getAllLendersFlat();
-  fDeals.forEach(d=>{const p=getDealPips(d);ts+=p.sent;ta+=p.approved;td2+=p.declined;tf+=p.funded;to+=p.omns;if(d.fundedData)Object.values(d.fundedData).forEach(f=>{const a=parseFloat((f.amount||'').replace(/[^0-9.]/g,''));if(!isNaN(a))totFAmt+=a;const co=parseFloat((f.commission||'').replace(/[^0-9.]/g,''));if(!isNaN(co))totComm+=co;});});
+  monthDeals.forEach(d=>{
+    const p=getDealPips(d);ts+=p.sent;ta+=p.approved;td2+=p.declined;tf+=p.funded;to+=p.omns;
+    if(d.fundedData)Object.entries(d.lenderStates||{}).forEach(([lk,st])=>{
+      if(st==='funded'&&d.fundedData[lk]){
+        const a=parseFloat((d.fundedData[lk].amount||'').replace(/[^0-9.]/g,''));if(!isNaN(a))totFAmt+=a;
+        const co=parseFloat((d.fundedData[lk].commission||'').replace(/[^0-9.]/g,''));if(!isNaN(co))totComm+=co;
+      }
+    });
+  });
   const monthOpts=MONTHS.map((m,i)=>`<option value="${i}"${i===selectedMonth?' selected':''}>${m}</option>`).join('');
-  c.innerHTML=`<div class="dash"><div class="dash-hero"><h2>Monthly Report</h2><p>${MONTHS[selectedMonth]} ${yr}</p></div><div class="month-selector"><select onchange="selectedMonth=parseInt(this.value);renderMonthlyView();">${monthOpts}</select>${selectedRep?`<span style="font-size:12px;color:var(--accent);font-weight:600;">Filtered: ${esc(selectedRep)}</span>`:''}</div><div class="stats-row"><div class="stat-card"><div class="stat-val stat-accent">${fDeals.length}</div><div class="stat-label">Total Deals</div></div><div class="stat-card"><div class="stat-val stat-yellow">${ts}</div><div class="stat-label">Submissions</div></div><div class="stat-card"><div class="stat-val stat-accent">${ta}</div><div class="stat-label">Approvals</div></div><div class="stat-card"><div class="stat-val stat-red">${td2}</div><div class="stat-label">Declines</div></div></div><div class="stats-row"><div class="stat-card"><div class="stat-val stat-green">${tf}</div><div class="stat-label">Funded</div></div><div class="stat-card"><div class="stat-val stat-green">$${Math.round(totFAmt).toLocaleString()}</div><div class="stat-label">Funded Amount</div></div><div class="stat-card"><div class="stat-val stat-green">$${Math.round(totComm).toLocaleString()}</div><div class="stat-label">Commission</div></div><div class="stat-card"><div class="stat-val" style="color:var(--orange);">${to}</div><div class="stat-label">OMNS</div></div></div></div>`;
+  c.innerHTML=`<div class="dash"><div class="dash-hero"><h2>Monthly Report</h2><p>${MONTHS[selectedMonth]} ${yr}</p></div><div class="month-selector"><select onchange="selectedMonth=parseInt(this.value);renderMonthlyView();renderSidebar();">${monthOpts}</select>${selectedRep?`<span style="font-size:12px;color:var(--accent);font-weight:600;">Filtered: ${esc(selectedRep==='__unassigned__'?'Unassigned':selectedRep)}</span>`:''}</div><div class="stats-row"><div class="stat-card"><div class="stat-val stat-accent">${monthDeals.length}</div><div class="stat-label">Total Deals</div></div><div class="stat-card"><div class="stat-val stat-yellow">${ts}</div><div class="stat-label">Submissions</div></div><div class="stat-card"><div class="stat-val stat-accent">${ta}</div><div class="stat-label">Approvals</div></div><div class="stat-card"><div class="stat-val stat-red">${td2}</div><div class="stat-label">Declines</div></div></div><div class="stats-row"><div class="stat-card"><div class="stat-val stat-green">${tf}</div><div class="stat-label">Funded</div></div><div class="stat-card"><div class="stat-val stat-green">$${Math.round(totFAmt).toLocaleString()}</div><div class="stat-label">Funded Amount</div></div><div class="stat-card"><div class="stat-val stat-green">$${Math.round(totComm).toLocaleString()}</div><div class="stat-label">Commission</div></div><div class="stat-card"><div class="stat-val" style="color:var(--orange);">${to}</div><div class="stat-label">OMNS</div></div></div></div>`;
 }
 
 // Deal View
@@ -596,9 +634,9 @@ setInterval(()=>{if(!firebaseUrl)return;
   fetch(firebaseUrl+'/deals.json').then(r=>r.json()).then(data=>{if(!data||typeof data!=='object')return;let ch=false;
     Object.keys(data).forEach(k=>{if(recentlyDeleted.has(k))return;if(JSON.stringify(data[k])!==JSON.stringify(deals[k])){deals[k]=data[k];ch=true;}});
     Object.keys(deals).forEach(k=>{if(!data[k]&&!recentlyDeleted.has(k)){delete deals[k];ch=true;}});
-    if(ch){saveLocal();renderAll();}
+    if(ch){saveLocal();renderChrome();}
   }).catch(()=>{});
-  fetch(firebaseUrl+'/reps.json').then(r=>r.json()).then(data=>{if(Array.isArray(data)&&JSON.stringify(data)!==JSON.stringify(reps)){reps=data;saveLocal();renderAll();}}).catch(()=>{});
+  fetch(firebaseUrl+'/reps.json').then(r=>r.json()).then(data=>{if(Array.isArray(data)&&JSON.stringify(data)!==JSON.stringify(reps)){reps=data;saveLocal();renderChrome();}}).catch(()=>{});
 },5000);
 </script>
 </body>
