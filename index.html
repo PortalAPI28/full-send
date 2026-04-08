@@ -329,6 +329,8 @@ async function ensureToken(){if(!signedInUser)return null;try{const r=await msal
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function toast(msg,isErr){const t=document.getElementById('toast');t.textContent=msg;t.className=isErr?'toast error show':'toast show';setTimeout(()=>t.classList.remove('show'),3000);}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function formatCurrency(val){const num=parseFloat((val||'').replace(/[^0-9.]/g,''));if(isNaN(num))return val;return'$'+num.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});}
+function setupCurrencyField(id){const el=document.getElementById(id);if(!el)return;el.addEventListener('blur',()=>{if(el.value.trim())el.value=formatCurrency(el.value);});}
 function getAllLendersFlat(){const a=[];Object.entries(LENDERS).forEach(([risk,list])=>{list.forEach((l,i)=>{a.push({...l,key:`${risk}-${i}`});});});return a;}
 
 // Deal helpers
@@ -377,8 +379,11 @@ function renderSidebar(){
   sidebarDeals.forEach(d=>{const r=d.rep||'__unassigned__';if(!byRep[r])byRep[r]=[];byRep[r].push(d);});
   
   let html='';
-  // "All" header
-  html+=`<div class="rep-folder-header${!selectedRep?' active':''}" onclick="selectRep(null)" style="margin-bottom:4px;"><span style="font-size:11px;">All</span><span class="rep-cnt">${sidebarDeals.length}</span></div>`;
+  // "All" collapsible folder
+  const allOpen=expandedReps['__all__'];
+  html+=`<div class="rep-folder"><div class="rep-folder-header${!selectedRep?' active':''}" onclick="expandedReps['__all__']=!expandedReps['__all__'];selectedRep=null;renderSidebar();if(['dashboard','funded','omns','monthly'].includes(activeView)){if(activeView==='dashboard')renderDashboard();else if(activeView==='funded')renderFundedView();else if(activeView==='omns')renderOMNSView();else if(activeView==='monthly')renderMonthlyView();}"><span class="rep-arrow${allOpen?' open':''}">▶</span><span style="font-size:11px;">All</span><span class="rep-cnt">${sidebarDeals.length}</span></div><div class="rep-folder-deals${allOpen?' open':''}">`;
+  sidebarDeals.forEach(d=>{html+=dealItemHTML(d);});
+  html+=`</div></div>`;
   // Rep folders
   reps.forEach(r=>{
     const rd=byRep[r]||[];
@@ -565,6 +570,9 @@ function showPopup(type,tr,dealId){
   const ol=document.createElement('div');ol.className='overlay';ol.id='popup-overlay';
   ol.innerHTML=`<div class="overlay-box" style="border:1px solid ${col.border};"><h3 style="color:${col.title};">${esc(ln)} — ${labels[type]}</h3><div class="overlay-sub">${esc(biz)}</div>${fieldsHTML}<div class="overlay-btns"><button class="btn" onclick="closePopup()">Cancel</button><button class="btn ${col.btn}" onclick="savePopup('${type}','${dealId}','${lk}')">${col.label}</button></div></div>`;
   document.body.appendChild(ol);ol._tr=tr;document.getElementById('pop-amount').focus();
+  setupCurrencyField('pop-amount');
+  if(type==='funded')setupCurrencyField('pop-comm');
+  if(type!=='funded')setupCurrencyField('pop-four');
 }
 function savePopup(type,dealId,lk){
   const d=deals[dealId];if(!d)return;
