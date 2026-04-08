@@ -206,6 +206,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .lender-table tr.declined .lender-name{color:var(--red);}
 .lender-table tr.declined:hover td{background:rgba(248,81,73,0.16);}
 
+.lender-table tr.funded td{background:var(--accent-dim);}
+.lender-table tr.funded .lender-name{color:var(--accent);}
+.lender-table tr.funded:hover td{background:rgba(88,166,255,0.16);}
+
 .lender-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .lender-email{font-family:var(--mono);font-size:10px;color:var(--text-muted);word-break:break-all;}
 .lender-exempt{font-size:10px;color:var(--yellow);}
@@ -292,6 +296,20 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .approval-btns .btn{padding:8px 16px;}
 .btn-approve{background:var(--green-dim);color:var(--green);border-color:var(--green);}
 .btn-approve:hover{background:rgba(63,185,80,0.2);}
+.btn-funded{background:var(--accent-dim);color:var(--accent);border-color:var(--accent);}
+.btn-funded:hover{background:rgba(88,166,255,0.2);}
+
+/* Funded overlay */
+.funded-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);animation:fadeIn 0.15s ease-out;}
+.funded-box{background:var(--card);border:1px solid var(--accent);border-radius:14px;padding:24px;max-width:400px;width:90%;animation:fadeIn 0.15s ease-out;}
+.funded-box h3{font-size:15px;font-weight:700;color:var(--accent);margin-bottom:2px;}
+.funded-box .funded-sub{font-size:11px;color:var(--text-muted);margin-bottom:16px;}
+.funded-box .funded-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.funded-box .funded-grid .field label{font-size:10px;}
+.funded-box .funded-grid .field input{font-size:13px;padding:7px 9px;}
+.funded-box .funded-full{margin-bottom:16px;}
+.funded-box .funded-full .field label{font-size:10px;}
+.funded-box .funded-full .field input{font-size:13px;padding:7px 9px;}
 
 /* Emailed indicator */
 .emailed-badge{font-size:7px;font-family:var(--mono);background:var(--accent-dim);color:var(--accent);padding:1px 4px;border-radius:3px;margin-left:4px;font-weight:700;}
@@ -320,6 +338,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   .lender-table tr.sent td{background:#fff3cd!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .lender-table tr.approved td{background:#d4edda!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .lender-table tr.declined td{background:#f8d7da!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .lender-table tr.funded td{background:#cce5ff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 }
 </style>
 </head>
@@ -354,6 +373,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div class="main">
     <div class="tab-bar" id="tab-bar">
       <div class="tab-dash active" onclick="showDashboard()">Dashboard</div>
+      <div class="tab-dash" onclick="showFunded()">Funded</div>
     </div>
     <div class="content" id="content"></div>
   </div>
@@ -363,6 +383,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <div class="ctx-menu" id="ctx-menu">
   <button onclick="setLenderState('approved')"><span class="ctx-dot ctx-dot-green"></span>Approved</button>
   <button onclick="setLenderState('declined')"><span class="ctx-dot ctx-dot-red"></span>Declined</button>
+  <button onclick="setLenderState('funded')"><span class="ctx-dot ctx-dot-blue"></span>Funded</button>
   <button onclick="forceResend()"><span class="ctx-dot ctx-dot-blue"></span>Force Re-send</button>
   <button onclick="setLenderState('')"><span class="ctx-dot ctx-dot-clear"></span>Clear Status</button>
 </div>
@@ -470,8 +491,7 @@ const msalInstance = new msal.PublicClientApplication(msalConfig);
 let deals = {};
 let reps = [];
 let selectedRep = null;
-let openTabs = [];
-let activeView = 'dashboard';
+let activeView = 'dashboard'; // 'dashboard', 'funded', or dealId
 let firebaseUrl = 'https://submissions-tracker-db9ac-default-rtdb.firebaseio.com';
 let ctxTarget = null;
 let accessToken = null;
@@ -482,15 +502,15 @@ let dealFiles = {}; // {dealId: [File, ...]}
    STORAGE
    ============================================================ */
 const LS_KEY = 'gotham_deals';
-const LS_TABS = 'gotham_open_tabs';
+const LS_TABS = 'gotham_active_view';
 const LS_REPS = 'gotham_reps';
 
 function loadLocal() {
   try {
     const raw = localStorage.getItem(LS_KEY);
     if (raw) deals = JSON.parse(raw);
-    const tabs = localStorage.getItem(LS_TABS);
-    if (tabs) openTabs = JSON.parse(tabs).filter(id => deals[id]);
+    const av = localStorage.getItem(LS_TABS);
+    if (av) activeView = av;
     const r = localStorage.getItem(LS_REPS);
     if (r) reps = JSON.parse(r);
   } catch(e) {}
@@ -499,7 +519,7 @@ function loadLocal() {
 function saveLocal() {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(deals));
-    localStorage.setItem(LS_TABS, JSON.stringify(openTabs));
+    localStorage.setItem(LS_TABS, activeView);
     localStorage.setItem(LS_REPS, JSON.stringify(reps));
   } catch(e) {}
 }
@@ -614,7 +634,7 @@ async function ensureToken() {
    ============================================================ */
 function newDealData() {
   const id = 'deal_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
-  return { id, rep: '', fields: {}, courts: '', rev: {}, lenders: {}, lenderStates: {}, emailFields: {}, emailedLenders: [], approvalData: {}, created: new Date().toISOString() };
+  return { id, rep: '', fields: {}, courts: '', rev: {}, lenders: {}, lenderStates: {}, emailFields: {}, emailedLenders: [], approvalData: {}, fundedData: {}, created: new Date().toISOString() };
 }
 
 function createDeal() {
@@ -639,10 +659,15 @@ function deleteDeal(id) {
 
 function getDealLabel(d) { return d.fields?.business || 'Untitled Deal'; }
 
+function isDealFunded(d) {
+  if (!d.lenderStates) return false;
+  return Object.values(d.lenderStates).some(v => v === 'funded');
+}
+
 function getDealPips(d) {
-  let s=0,a=0,dec=0;
-  if (d.lenderStates) Object.values(d.lenderStates).forEach(v => { if(v==='sent')s++; if(v==='approved')a++; if(v==='declined')dec++; });
-  return {sent:s,approved:a,declined:dec};
+  let s=0,a=0,dec=0,f=0;
+  if (d.lenderStates) Object.values(d.lenderStates).forEach(v => { if(v==='sent')s++; if(v==='approved')a++; if(v==='declined')dec++; if(v==='funded')f++; });
+  return {sent:s,approved:a,declined:dec,funded:f};
 }
 
 /* ============================================================
@@ -664,10 +689,14 @@ function renderRepTabs() {
 function selectRep(rep) { selectedRep = rep; renderRepTabs(); renderSidebar(); if (activeView==='dashboard') renderDashboard(); }
 
 function getFilteredDeals() {
-  let list = Object.values(deals);
+  let list = Object.values(deals).filter(d => !isDealFunded(d)); // exclude funded from active
   if (selectedRep==='__unassigned__') list = list.filter(d => !d.rep);
   else if (selectedRep) list = list.filter(d => d.rep === selectedRep);
   return list.sort((a,b) => b.created.localeCompare(a.created));
+}
+
+function getFundedDeals() {
+  return Object.values(deals).filter(d => isDealFunded(d)).sort((a,b) => b.created.localeCompare(a.created));
 }
 
 /* ============================================================
@@ -676,8 +705,17 @@ function getFilteredDeals() {
 function renderSidebar() {
   const list = document.getElementById('deal-list');
   const sorted = getFilteredDeals();
-  if (!sorted.length) { list.innerHTML = '<div class="empty-state" style="padding:30px 10px;"><p style="font-size:12px;">No deals yet</p></div>'; return; }
-  list.innerHTML = sorted.map(d => {
+  const funded = getFundedDeals();
+
+  let html = '';
+
+  if (!sorted.length && !funded.length) {
+    list.innerHTML = '<div class="empty-state" style="padding:30px 10px;"><p style="font-size:12px;">No deals yet</p></div>';
+    return;
+  }
+
+  // Active deals
+  html += sorted.map(d => {
     const pips = getDealPips(d);
     const isActive = activeView === d.id;
     return `<div class="deal-item${isActive?' active':''}" onclick="openTab('${d.id}')">
@@ -696,6 +734,28 @@ function renderSidebar() {
       <span class="deal-close" onclick="event.stopPropagation();deleteDeal('${d.id}')">&times;</span>
     </div>`;
   }).join('');
+
+  // Funded deals
+  if (funded.length) {
+    html += `<div style="padding:8px 4px 4px;margin-top:6px;border-top:1px solid var(--border);"><span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);">Funded</span></div>`;
+    html += funded.map(d => {
+      const pips = getDealPips(d);
+      const isActive = activeView === d.id;
+      return `<div class="deal-item${isActive?' active':''}" onclick="openTab('${d.id}')" style="opacity:0.7;">
+        <div style="flex:1;overflow:hidden;">
+          <div class="deal-biz" style="color:var(--accent);">${esc(getDealLabel(d))}</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:2px;">
+            <span class="deal-date">${d.fields?.date||'—'}</span>
+            ${d.rep?`<span style="font-size:10px;color:var(--accent);font-weight:600;">${esc(d.rep)}</span>`:''}
+            <span class="deal-pip" style="background:var(--accent-dim);color:var(--accent);">${pips.funded}F</span>
+          </div>
+        </div>
+        <span class="deal-close" onclick="event.stopPropagation();deleteDeal('${d.id}')">&times;</span>
+      </div>`;
+    }).join('');
+  }
+
+  list.innerHTML = html;
 }
 
 /* ============================================================
@@ -704,32 +764,32 @@ function renderSidebar() {
 function renderTabBar() {
   const bar = document.getElementById('tab-bar');
   bar.innerHTML = `<div class="tab-dash${activeView==='dashboard'?' active':''}" onclick="showDashboard()">Dashboard</div>` +
-    openTabs.map(id => { const d=deals[id]; if(!d) return ''; return `<div class="tab${activeView===id?' active':''}" onclick="switchTab('${id}')">${esc(getDealLabel(d))}<span class="tab-close" onclick="event.stopPropagation();closeTab('${id}')">&times;</span></div>`; }).join('');
+    `<div class="tab-dash${activeView==='funded'?' active':''}" onclick="showFunded()">Funded</div>`;
 }
 
-function openTab(id) { if(!openTabs.includes(id))openTabs.push(id); activeView=id; persist(); renderSidebar(); renderTabBar(); renderDealView(id); }
-function closeTab(id) { openTabs=openTabs.filter(t=>t!==id); if(activeView===id){if(openTabs.length)switchTab(openTabs[openTabs.length-1]);else showDashboard();} saveLocal(); renderTabBar(); }
+function openTab(id) { activeView=id; saveLocal(); renderSidebar(); renderTabBar(); renderDealView(id); }
 function switchTab(id) { activeView=id; saveLocal(); renderSidebar(); renderTabBar(); renderDealView(id); }
-function showDashboard() { if(activeView!=='dashboard'&&deals[activeView])saveDealFromDOM(activeView); activeView='dashboard'; saveLocal(); renderRepTabs(); renderSidebar(); renderTabBar(); renderDashboard(); }
+function showDashboard() { if(activeView!=='dashboard'&&activeView!=='funded'&&deals[activeView])saveDealFromDOM(activeView); activeView='dashboard'; saveLocal(); renderRepTabs(); renderSidebar(); renderTabBar(); renderDashboard(); }
+function showFunded() { if(activeView!=='dashboard'&&activeView!=='funded'&&deals[activeView])saveDealFromDOM(activeView); activeView='funded'; saveLocal(); renderSidebar(); renderTabBar(); renderFundedView(); }
 
 /* ============================================================
    UI — Dashboard
    ============================================================ */
 function renderDashboard() {
   const c = document.getElementById('content');
-  const allDeals = Object.values(deals).sort((a,b) => b.created.localeCompare(a.created));
+  const activeDeals = Object.values(deals).filter(d => !isDealFunded(d)).sort((a,b) => b.created.localeCompare(a.created));
   let totalSent=0,totalApproved=0,totalDeclined=0;
-  allDeals.forEach(d => { const p=getDealPips(d); totalSent+=p.sent; totalApproved+=p.approved; totalDeclined+=p.declined; });
+  activeDeals.forEach(d => { const p=getDealPips(d); totalSent+=p.sent; totalApproved+=p.approved; totalDeclined+=p.declined; });
 
-  // Rep performance
+  // Rep performance (active deals only)
   let repStatsHtml = '';
   if (reps.length) {
     const repRows = reps.map(r => {
-      const rd = allDeals.filter(d => d.rep===r); let rs=0,ra=0,rdd=0;
+      const rd = activeDeals.filter(d => d.rep===r); let rs=0,ra=0,rdd=0;
       rd.forEach(d => { const p=getDealPips(d); rs+=p.sent; ra+=p.approved; rdd+=p.declined; });
       return `<tr><td style="font-weight:600;font-size:13px;cursor:pointer;" onclick="selectRep('${esc(r)}')">${esc(r)}</td><td><span class="deal-pip" style="background:var(--accent-dim);color:var(--accent);">${rd.length}</span></td><td><span class="deal-pip pip-y">${rs}</span></td><td><span class="deal-pip pip-g">${ra}</span></td><td><span class="deal-pip pip-r">${rdd}</span></td></tr>`;
     }).join('');
-    const unDeals = allDeals.filter(d => !d.rep); let us=0,ua=0,ud=0;
+    const unDeals = activeDeals.filter(d => !d.rep); let us=0,ua=0,ud=0;
     unDeals.forEach(d => { const p=getDealPips(d); us+=p.sent; ua+=p.approved; ud+=p.declined; });
     const unRow = unDeals.length ? `<tr style="color:var(--text-muted);"><td style="font-size:13px;cursor:pointer;" onclick="selectRep('__unassigned__')">Unassigned</td><td><span class="deal-pip" style="background:rgba(255,255,255,0.05);color:var(--text-muted);">${unDeals.length}</span></td><td><span class="deal-pip pip-y">${us}</span></td><td><span class="deal-pip pip-g">${ua}</span></td><td><span class="deal-pip pip-r">${ud}</span></td></tr>` : '';
     repStatsHtml = `<div class="section" style="margin-bottom:20px;"><div class="section-title">Rep Performance</div><table class="dash-table"><thead><tr><th>Rep</th><th>Deals</th><th>Sent</th><th>Approved</th><th>Declined</th></tr></thead><tbody>${repRows}${unRow}</tbody></table></div>`;
@@ -742,7 +802,7 @@ function renderDashboard() {
     list.forEach((l, i) => { allLendersFlat.push({ ...l, key: `${risk}-${i}` }); });
   });
 
-  allDeals.forEach(d => {
+  activeDeals.forEach(d => {
     if (!d.lenderStates || !d.approvalData) return;
     Object.entries(d.lenderStates).forEach(([lk, state]) => {
       if (state === 'approved' && d.approvalData[lk]) {
@@ -801,10 +861,82 @@ function renderDashboard() {
   }
 
   c.innerHTML = `<div class="dash"><div class="dash-hero"><h2>Gotham Full Send</h2><p>Track deals, send submissions, manage approvals — all in one place.</p></div>
-    <div class="stats-row"><div class="stat-card"><div class="stat-val stat-accent">${allDeals.length}</div><div class="stat-label">Active Deals</div></div><div class="stat-card"><div class="stat-val stat-yellow">${totalSent}</div><div class="stat-label">Sent</div></div><div class="stat-card"><div class="stat-val stat-green">${totalApproved}</div><div class="stat-label">Approved</div></div><div class="stat-card"><div class="stat-val stat-red">${totalDeclined}</div><div class="stat-label">Declined</div></div></div>
+    <div class="stats-row"><div class="stat-card"><div class="stat-val stat-accent">${activeDeals.length}</div><div class="stat-label">Active Deals</div></div><div class="stat-card"><div class="stat-val stat-yellow">${totalSent}</div><div class="stat-label">Sent</div></div><div class="stat-card"><div class="stat-val stat-green">${totalApproved}</div><div class="stat-label">Approved</div></div><div class="stat-card"><div class="stat-val stat-red">${totalDeclined}</div><div class="stat-label">Declined</div></div></div>
     ${repStatsHtml}
     ${approvalsHtml}
-    ${!allDeals.length ? `<div class="empty-state"><h3>No deals yet</h3><p>Click <strong>+ New Deal</strong> to get started.</p></div>` : ''}
+    ${!activeDeals.length ? `<div class="empty-state"><h3>No active deals</h3><p>Click <strong>+ New Deal</strong> to get started.</p></div>` : ''}
+  </div>`;
+}
+
+/* ============================================================
+   UI — Funded View
+   ============================================================ */
+function renderFundedView() {
+  const c = document.getElementById('content');
+  const fundedDeals = getFundedDeals();
+
+  const allLendersFlat = [];
+  Object.entries(LENDERS).forEach(([risk, list]) => {
+    list.forEach((l, i) => { allLendersFlat.push({ ...l, key: `${risk}-${i}` }); });
+  });
+
+  // Gather funded entries
+  const fundedEntries = [];
+  fundedDeals.forEach(d => {
+    if (!d.lenderStates || !d.fundedData) return;
+    Object.entries(d.lenderStates).forEach(([lk, state]) => {
+      if (state === 'funded' && d.fundedData[lk]) {
+        const fd = d.fundedData[lk];
+        const lender = allLendersFlat.find(l => l.key === lk);
+        fundedEntries.push({
+          business: d.fields?.business || 'Untitled',
+          lenderName: lender ? lender.name : lk,
+          amount: fd.amount || '',
+          term: fd.term || '',
+          rate: fd.rate || '',
+          points: fd.points || '',
+          commission: fd.commission || '',
+          rep: d.rep || '—',
+          dealId: d.id
+        });
+      }
+    });
+  });
+
+  // Totals
+  let totalFunded = 0, totalCommission = 0, pointsSum = 0, pointsCount = 0;
+  fundedEntries.forEach(f => {
+    const amt = parseFloat((f.amount||'').replace(/[^0-9.]/g,''));
+    if (!isNaN(amt)) totalFunded += amt;
+    const comm = parseFloat((f.commission||'').replace(/[^0-9.]/g,''));
+    if (!isNaN(comm)) totalCommission += comm;
+    const pts = parseFloat((f.points||'').replace(/[^0-9.]/g,''));
+    if (!isNaN(pts)) { pointsSum += pts; pointsCount++; }
+  });
+  const avgPts = pointsCount ? (pointsSum / pointsCount).toFixed(1) + '%' : '—';
+
+  c.innerHTML = `<div class="dash">
+    <div class="dash-hero"><h2>Funded Deals</h2><p>Deals that have closed and funded.</p></div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-val" style="color:var(--accent);">$${Math.round(totalFunded).toLocaleString()}</div><div class="stat-label">Total Funded</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--text);">${fundedEntries.length}</div><div class="stat-label">Deals Funded</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--accent);">$${Math.round(totalCommission).toLocaleString()}</div><div class="stat-label">Total Commission</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--text);">${avgPts}</div><div class="stat-label">Avg. Points</div></div>
+    </div>
+    ${fundedEntries.length ? `<div class="section"><div class="section-title">Funded Details</div>
+    <table class="dash-table">
+      <thead><tr><th>Business</th><th>Lender</th><th>Amount</th><th>Term</th><th>Rate</th><th>Pts</th><th>Commission</th><th>Rep</th></tr></thead>
+      <tbody>${fundedEntries.map(f => `<tr onclick="openTab('${f.dealId}')">
+        <td class="dt-biz">${esc(f.business)}</td>
+        <td style="font-size:12px;">${esc(f.lenderName)}</td>
+        <td style="font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:600;">${esc(f.amount)}</td>
+        <td style="font-family:var(--mono);font-size:12px;">${esc(f.term)}</td>
+        <td style="font-family:var(--mono);font-size:12px;">${esc(f.rate)}</td>
+        <td style="font-family:var(--mono);font-size:12px;">${esc(f.points)}</td>
+        <td style="font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:600;">${esc(f.commission)}</td>
+        <td style="font-size:12px;color:var(--accent);">${esc(f.rep)}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>` : `<div class="empty-state"><h3>No funded deals yet</h3><p>Right-click a lender and select "Funded" to mark a deal as funded.</p></div>`}
   </div>`;
 }
 
@@ -897,6 +1029,7 @@ function renderDealView(id) {
           <div class="legend-item"><span class="legend-dot ld-y"></span>Sent</div>
           <div class="legend-item"><span class="legend-dot ld-g"></span>Approved</div>
           <div class="legend-item"><span class="legend-dot ld-r"></span>Declined</div>
+          <div class="legend-item"><span class="legend-dot" style="background:var(--accent-dim);border:1px solid var(--accent);"></span>Funded</div>
           <div class="legend-item" style="margin-left:6px;font-size:10px;color:var(--text-muted);">Click = Sent &nbsp;|&nbsp; Right-click = Approve / Decline</div>
         </div>
       </div>
@@ -956,7 +1089,7 @@ function buildLenderTables(id, d) {
         <td><input class="status-input" data-lk="${lk}" placeholder="Enter status..." value="${esc(d.lenders?.[lk]||'')}"></td>`;
       tr.addEventListener('click', (e) => {
         if (e.target.classList.contains('status-input')) return;
-        if (tr.classList.contains('approved') || tr.classList.contains('declined')) return;
+        if (tr.classList.contains('approved') || tr.classList.contains('declined') || tr.classList.contains('funded')) return;
         tr.classList.toggle('sent');
         saveDealFromDOM(id);
         renderSidebar();
@@ -1040,7 +1173,8 @@ function saveDealFromDOM(id) {
   view.querySelectorAll('[data-lk]').forEach(el => { d.lenders[el.dataset.lk] = el.value; });
   view.querySelectorAll('tr[data-lender-key]').forEach(tr => {
     const k = tr.dataset.lenderKey;
-    if (tr.classList.contains('approved')) d.lenderStates[k] = 'approved';
+    if (tr.classList.contains('funded')) d.lenderStates[k] = 'funded';
+    else if (tr.classList.contains('approved')) d.lenderStates[k] = 'approved';
     else if (tr.classList.contains('declined')) d.lenderStates[k] = 'declined';
     else if (tr.classList.contains('sent')) d.lenderStates[k] = 'sent';
     else delete d.lenderStates[k];
@@ -1236,19 +1370,27 @@ function setLenderState(state) {
   const { tr, dealId } = ctxTarget;
 
   if (state === 'approved') {
-    // Show approval popup instead of immediately setting
     hideCtx();
     showApprovalPopup(tr, dealId);
     return;
   }
 
-  tr.classList.remove('sent','approved','declined');
+  if (state === 'funded') {
+    hideCtx();
+    showFundedPopup(tr, dealId);
+    return;
+  }
+
+  tr.classList.remove('sent','approved','declined','funded');
   if (state) tr.classList.add(state);
 
-  // If clearing, also remove approval data
+  // If clearing, also remove approval/funded data
   if (!state) {
     const d = deals[dealId];
-    if (d && d.approvalData) delete d.approvalData[tr.dataset.lenderKey];
+    if (d) {
+      if (d.approvalData) delete d.approvalData[tr.dataset.lenderKey];
+      if (d.fundedData) delete d.fundedData[tr.dataset.lenderKey];
+    }
   }
 
   saveDealFromDOM(dealId);
@@ -1265,7 +1407,7 @@ function forceResend() {
     // Remove from emailedLenders so it gets picked up on next send
     d.emailedLenders = (d.emailedLenders || []).filter(k => k !== lk);
     // Set back to sent state
-    tr.classList.remove('approved','declined');
+    tr.classList.remove('approved','declined','funded');
     tr.classList.add('sent');
     saveDealFromDOM(dealId);
     // Re-render to update badge
@@ -1339,6 +1481,72 @@ function cancelApproval() {
   if (overlay) overlay.remove();
 }
 
+function showFundedPopup(tr, dealId) {
+  const lk = tr.dataset.lenderKey;
+  const d = deals[dealId];
+  const existing = d?.fundedData?.[lk] || {};
+  const allLendersFlat = [];
+  Object.entries(LENDERS).forEach(([risk, list]) => {
+    list.forEach((l, i) => { allLendersFlat.push({ ...l, key: `${risk}-${i}` }); });
+  });
+  const lender = allLendersFlat.find(l => l.key === lk);
+  const lenderName = lender ? lender.name : lk;
+  const bizName = d?.fields?.business || 'Untitled Deal';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'funded-overlay';
+  overlay.id = 'funded-overlay';
+  overlay.innerHTML = `<div class="funded-box">
+    <h3>${esc(lenderName)} — Funded</h3>
+    <div class="funded-sub">${esc(bizName)}</div>
+    <div class="funded-grid">
+      <div class="field"><label>Amount</label><input id="fund-amount" placeholder="$50,000" value="${esc(existing.amount||'')}"></div>
+      <div class="field"><label>Term</label><input id="fund-term" placeholder="6 months" value="${esc(existing.term||'')}"></div>
+      <div class="field"><label>Rate / Factor</label><input id="fund-rate" placeholder="1.35" value="${esc(existing.rate||'')}"></div>
+      <div class="field"><label>Points</label><input id="fund-points" placeholder="10%" value="${esc(existing.points||'')}"></div>
+    </div>
+    <div class="funded-full">
+      <div class="field"><label>Total Commission</label><input id="fund-commission" placeholder="$5,000" value="${esc(existing.commission||'')}"></div>
+    </div>
+    <div class="approval-btns">
+      <button class="btn" onclick="cancelFunded()">Cancel</button>
+      <button class="btn btn-funded" onclick="saveFunded('${dealId}','${lk}')">Save Funded Deal</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  document.getElementById('fund-amount').focus();
+  overlay._tr = tr;
+}
+
+function saveFunded(dealId, lk) {
+  const d = deals[dealId];
+  if (!d) return;
+  d.fundedData = d.fundedData || {};
+  d.fundedData[lk] = {
+    amount: document.getElementById('fund-amount').value.trim(),
+    term: document.getElementById('fund-term').value.trim(),
+    rate: document.getElementById('fund-rate').value.trim(),
+    points: document.getElementById('fund-points').value.trim(),
+    commission: document.getElementById('fund-commission').value.trim()
+  };
+
+  const overlay = document.getElementById('funded-overlay');
+  if (overlay && overlay._tr) {
+    overlay._tr.classList.remove('sent','approved','declined');
+    overlay._tr.classList.add('funded');
+  }
+
+  cancelFunded();
+  saveDealFromDOM(dealId);
+  renderSidebar();
+  renderTabBar();
+}
+
+function cancelFunded() {
+  const overlay = document.getElementById('funded-overlay');
+  if (overlay) overlay.remove();
+}
+
 function hideCtx() { document.getElementById('ctx-menu').classList.remove('show'); ctxTarget = null; }
 document.addEventListener('click', (e) => { if (!document.getElementById('ctx-menu').contains(e.target)) hideCtx(); });
 document.addEventListener('keydown', (e) => { if (e.key==='Escape') hideCtx(); });
@@ -1379,7 +1587,8 @@ loadFromFirebase(() => {
   renderRepTabs();
   renderSidebar();
   renderTabBar();
-  if (activeView !== 'dashboard' && deals[activeView]) renderDealView(activeView);
+  if (activeView === 'funded') renderFundedView();
+  else if (activeView !== 'dashboard' && deals[activeView]) renderDealView(activeView);
   else showDashboard();
 });
 
@@ -1409,6 +1618,7 @@ loadFromFirebase(() => {
         renderSidebar();
         renderTabBar();
         if (activeView === 'dashboard') renderDashboard();
+        else if (activeView === 'funded') renderFundedView();
       }
     }).catch(() => {});
     // Also poll reps
