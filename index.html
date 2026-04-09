@@ -276,6 +276,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <div class="sync-indicator" id="sync-status"><span class="sync-dot" id="sync-dot"></span><span id="sync-text">Local mode</span></div>
         <button class="btn btn-ghost btn-sm" onclick="manageReps()" style="font-size:10px;">Manage Reps</button>
+        <button class="btn btn-ghost btn-sm" onclick="openSettings()" style="font-size:10px;">Settings</button>
       </div>
     </div>
   </div>
@@ -305,17 +306,17 @@ const MONTHS=['January','February','March','April','May','June','July','August',
 const msalConfig={auth:{clientId:'7fdbb596-abb9-44a3-92df-dee7afb70632',authority:'https://login.microsoftonline.com/ec4a3ddf-5ebc-44ad-904a-3eed2baff0e3',redirectUri:window.location.origin+window.location.pathname}};
 const msalInstance=new msal.PublicClientApplication(msalConfig);
 
-let deals={},reps=[],selectedRep=null,activeView='dashboard',lastTab='dashboard',firebaseUrl='https://submissions-tracker-db9ac-default-rtdb.firebaseio.com',ctxTarget=null,accessToken=null,signedInUser=null,dealFiles={},recentlyDeleted=new Set(),expandedReps={},selectedMonth=null;
+let deals={},reps=[],selectedRep=null,activeView='dashboard',lastTab='dashboard',firebaseUrl='https://submissions-tracker-db9ac-default-rtdb.firebaseio.com',ctxTarget=null,accessToken=null,signedInUser=null,dealFiles={},recentlyDeleted=new Set(),expandedReps={},selectedMonth=null,webhookUrl='';
 
-const LS_KEY='gotham_deals',LS_VIEW='gotham_active_view',LS_REPS='gotham_reps';
-function loadLocal(){try{const r=localStorage.getItem(LS_KEY);if(r)deals=JSON.parse(r);const v=localStorage.getItem(LS_VIEW);if(v)activeView=v;const rr=localStorage.getItem(LS_REPS);if(rr)reps=JSON.parse(rr);}catch(e){}}
-function saveLocal(){try{localStorage.setItem(LS_KEY,JSON.stringify(deals));localStorage.setItem(LS_VIEW,activeView);localStorage.setItem(LS_REPS,JSON.stringify(reps));}catch(e){}}
+const LS_KEY='gotham_deals',LS_VIEW='gotham_active_view',LS_REPS='gotham_reps',LS_HOOK='gotham_webhook';
+function loadLocal(){try{const r=localStorage.getItem(LS_KEY);if(r)deals=JSON.parse(r);const v=localStorage.getItem(LS_VIEW);if(v)activeView=v;const rr=localStorage.getItem(LS_REPS);if(rr)reps=JSON.parse(rr);const h=localStorage.getItem(LS_HOOK);if(h)webhookUrl=h;}catch(e){}}
+function saveLocal(){try{localStorage.setItem(LS_KEY,JSON.stringify(deals));localStorage.setItem(LS_VIEW,activeView);localStorage.setItem(LS_REPS,JSON.stringify(reps));localStorage.setItem(LS_HOOK,webhookUrl);}catch(e){}}
 
-function saveToFirebase(){if(!firebaseUrl)return;fetch(firebaseUrl+'/deals.json',{method:'PATCH',body:JSON.stringify(deals),headers:{'Content-Type':'application/json'}}).then(()=>setSyncStatus(true)).catch(()=>setSyncStatus(false));fetch(firebaseUrl+'/reps.json',{method:'PUT',body:JSON.stringify(reps),headers:{'Content-Type':'application/json'}}).catch(()=>{});}
+function saveToFirebase(){if(!firebaseUrl)return;fetch(firebaseUrl+'/deals.json',{method:'PATCH',body:JSON.stringify(deals),headers:{'Content-Type':'application/json'}}).then(()=>setSyncStatus(true)).catch(()=>setSyncStatus(false));fetch(firebaseUrl+'/reps.json',{method:'PUT',body:JSON.stringify(reps),headers:{'Content-Type':'application/json'}}).catch(()=>{});if(webhookUrl)fetch(firebaseUrl+'/config/webhookUrl.json',{method:'PUT',body:JSON.stringify(webhookUrl),headers:{'Content-Type':'application/json'}}).catch(()=>{});}
 
 function deleteDealFromFirebase(id){if(!firebaseUrl)return;return fetch(firebaseUrl+'/deals/'+id+'.json',{method:'DELETE'});}
 
-function loadFromFirebase(cb){if(!firebaseUrl){cb();return;}Promise.all([fetch(firebaseUrl+'/deals.json').then(r=>r.json()),fetch(firebaseUrl+'/reps.json').then(r=>r.json())]).then(([dd,rr])=>{if(dd&&typeof dd==='object'){const lo={};Object.keys(deals).forEach(k=>{if(!dd[k])lo[k]=deals[k];});deals=Object.assign({},dd,lo);}if(Array.isArray(rr)&&rr.length)reps=rr;setSyncStatus(true);saveLocal();cb();}).catch(()=>{setSyncStatus(false);cb();});}
+function loadFromFirebase(cb){if(!firebaseUrl){cb();return;}Promise.all([fetch(firebaseUrl+'/deals.json').then(r=>r.json()),fetch(firebaseUrl+'/reps.json').then(r=>r.json()),fetch(firebaseUrl+'/config/webhookUrl.json').then(r=>r.json()).catch(()=>null)]).then(([dd,rr,wh])=>{if(dd&&typeof dd==='object'){const lo={};Object.keys(deals).forEach(k=>{if(!dd[k])lo[k]=deals[k];});deals=Object.assign({},dd,lo);}if(Array.isArray(rr)&&rr.length)reps=rr;if(wh&&typeof wh==='string')webhookUrl=wh;setSyncStatus(true);saveLocal();cb();}).catch(()=>{setSyncStatus(false);cb();});}
 
 function persist(){saveLocal();saveToFirebase();}
 function setSyncStatus(on){const d=document.getElementById('sync-dot'),t=document.getElementById('sync-text');if(!firebaseUrl){t.textContent='Local mode';d.className='sync-dot offline';return;}d.className=on?'sync-dot':'sync-dot offline';t.textContent=on?'Synced':'Offline';}
@@ -329,7 +330,8 @@ async function ensureToken(){if(!signedInUser)return null;try{const r=await msal
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function toast(msg,isErr){const t=document.getElementById('toast');t.textContent=msg;t.className=isErr?'toast error show':'toast show';setTimeout(()=>t.classList.remove('show'),3000);}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
-function formatCurrency(val){const num=parseFloat((val||'').replace(/[^0-9.]/g,''));if(isNaN(num))return val;return'$'+num.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});}
+function formatCurrency(val){const num=parseFloat((val||'').replace(/[^0-9.]/g,''));if(isNaN(num)||num===0)return val;return'$'+num.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});}
+function parseCurrency(val){const num=parseFloat((val||'').replace(/[^0-9.]/g,''));return isNaN(num)?0:num;}
 function setupCurrencyField(id){const el=document.getElementById(id);if(!el)return;el.addEventListener('blur',()=>{if(el.value.trim())el.value=formatCurrency(el.value);});}
 function getAllLendersFlat(){const a=[];Object.entries(LENDERS).forEach(([risk,list])=>{list.forEach((l,i)=>{a.push({...l,key:`${risk}-${i}`});});});return a;}
 
@@ -453,9 +455,9 @@ function renderFundedView(){
   if(selectedRep==='__unassigned__')fd=fd.filter(d=>!d.rep);
   else if(selectedRep)fd=fd.filter(d=>d.rep===selectedRep);
   const lf=getAllLendersFlat();const entries=[];
-  fd.forEach(d=>{if(!d.lenderStates||!d.fundedData)return;Object.entries(d.lenderStates).forEach(([lk,st])=>{if(st==='funded'&&d.fundedData[lk]){const f=d.fundedData[lk];const l=lf.find(x=>x.key===lk);entries.push({biz:d.fields?.business||'—',ln:l?l.name:lk,amt:f.amount||'',term:f.term||'',rate:f.rate||'',pts:f.points||'',comm:f.commission||'',rep:d.rep||'—',did:d.id});}});});
-  let totF=0,totC=0;entries.forEach(e=>{const a=parseFloat((e.amt||'').replace(/[^0-9.]/g,''));if(!isNaN(a))totF+=a;const co=parseFloat((e.comm||'').replace(/[^0-9.]/g,''));if(!isNaN(co))totC+=co;});
-  c.innerHTML=`<div class="dash"><div class="dash-hero"><h2>Funded Deals</h2><p>Deals that have closed and funded.</p></div><div class="stats-row"><div class="stat-card"><div class="stat-val stat-green">$${Math.round(totF).toLocaleString()}</div><div class="stat-label">Total Funded</div></div><div class="stat-card"><div class="stat-val stat-green">${entries.length}</div><div class="stat-label">Deals Funded</div></div><div class="stat-card"><div class="stat-val stat-green">$${Math.round(totC).toLocaleString()}</div><div class="stat-label">Total Commission</div></div></div>${entries.length?`<div class="section"><div class="section-title">Funded Details</div><table class="dash-table"><thead><tr><th>Business</th><th>Lender</th><th>Amount</th><th>Term</th><th>Rate</th><th>Pts</th><th>Commission</th><th>Rep</th></tr></thead><tbody>${entries.map(e=>`<tr onclick="openDeal('${e.did}')"><td class="dt-biz">${esc(e.biz)}</td><td style="font-size:12px;">${esc(e.ln)}</td><td style="font-family:var(--mono);font-size:12px;color:var(--green);font-weight:600;">${esc(e.amt)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(e.term)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(e.rate)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(e.pts)}</td><td style="font-family:var(--mono);font-size:12px;color:var(--green);font-weight:600;">${esc(e.comm)}</td><td style="font-size:12px;color:var(--accent);">${esc(e.rep)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty-state"><h3>No funded deals yet</h3></div>'}</div>`;
+  fd.forEach(d=>{if(!d.lenderStates||!d.fundedData)return;Object.entries(d.lenderStates).forEach(([lk,st])=>{if(st==='funded'&&d.fundedData[lk]){const f=d.fundedData[lk];const l=lf.find(x=>x.key===lk);entries.push({biz:d.fields?.business||'—',ln:l?l.name:lk,amt:f.amount||'',term:f.term||'',rate:f.rate||'',pts:f.points||'',comm:f.commission||'',fee:f.fee||'',totComm:f.totalCommission||'',split:f.split||'',dealType:f.dealType||'',rep:d.rep||'—',did:d.id});}});});
+  let totF=0,totC=0;entries.forEach(e=>{totF+=parseCurrency(e.amt);totC+=parseCurrency(e.totComm||e.comm);});
+  c.innerHTML=`<div class="dash"><div class="dash-hero"><h2>Funded Deals</h2><p>Deals that have closed and funded.</p></div><div class="stats-row"><div class="stat-card"><div class="stat-val stat-green">$${Math.round(totF).toLocaleString()}</div><div class="stat-label">Total Funded</div></div><div class="stat-card"><div class="stat-val stat-green">${entries.length}</div><div class="stat-label">Deals Funded</div></div><div class="stat-card"><div class="stat-val stat-green">$${Math.round(totC).toLocaleString()}</div><div class="stat-label">Total Commission</div></div></div>${entries.length?`<div class="section"><div class="section-title">Funded Details</div><div style="overflow-x:auto;"><table class="dash-table"><thead><tr><th>Business</th><th>Lender</th><th>Amount</th><th>Term</th><th>Rate</th><th>Pts</th><th>Comm</th><th>Fee</th><th>Total</th><th>Split</th><th>Type</th><th>Rep</th></tr></thead><tbody>${entries.map(e=>`<tr onclick="openDeal('${e.did}')"><td class="dt-biz">${esc(e.biz)}</td><td style="font-size:11px;">${esc(e.ln)}</td><td style="font-family:var(--mono);font-size:11px;color:var(--green);font-weight:600;">${esc(e.amt)}</td><td style="font-family:var(--mono);font-size:11px;">${esc(e.term)}</td><td style="font-family:var(--mono);font-size:11px;">${esc(e.rate)}</td><td style="font-family:var(--mono);font-size:11px;">${esc(e.pts)}</td><td style="font-family:var(--mono);font-size:11px;">${esc(e.comm)}</td><td style="font-family:var(--mono);font-size:11px;">${esc(e.fee)}</td><td style="font-family:var(--mono);font-size:11px;color:var(--green);font-weight:600;">${esc(e.totComm)}</td><td style="font-size:11px;">${esc(e.split)}</td><td style="font-size:11px;">${esc(e.dealType)}</td><td style="font-size:11px;color:var(--accent);">${esc(e.rep)}</td></tr>`).join('')}</tbody></table></div></div>`:'<div class="empty-state"><h3>No funded deals yet</h3></div>'}</div>`;
 }
 
 // OMNS view
@@ -482,8 +484,8 @@ function renderMonthlyView(){
     const p=getDealPips(d);ts+=p.sent;ta+=p.approved;td2+=p.declined;tf+=p.funded;to+=p.omns;
     if(d.fundedData)Object.entries(d.lenderStates||{}).forEach(([lk,st])=>{
       if(st==='funded'&&d.fundedData[lk]){
-        const a=parseFloat((d.fundedData[lk].amount||'').replace(/[^0-9.]/g,''));if(!isNaN(a))totFAmt+=a;
-        const co=parseFloat((d.fundedData[lk].commission||'').replace(/[^0-9.]/g,''));if(!isNaN(co))totComm+=co;
+        totFAmt+=parseCurrency(d.fundedData[lk].amount);
+        totComm+=parseCurrency(d.fundedData[lk].totalCommission||d.fundedData[lk].commission);
       }
     });
   });
@@ -564,22 +566,54 @@ function showPopup(type,tr,dealId){
   const existing=type==='approved'?(d?.approvalData?.[lk]||{}):type==='funded'?(d?.fundedData?.[lk]||{}):(d?.omnsData?.[lk]||{});
   const colors={approved:{border:'var(--accent)',title:'var(--accent)',btn:'btn-approve-action',label:'Save Approval'},funded:{border:'var(--green)',title:'var(--green)',btn:'btn-funded-action',label:'Save Funded Deal'},omns:{border:'var(--orange)',title:'var(--orange)',btn:'btn-omns-action',label:'Save OMNS'}};
   const col=colors[type];const labels={approved:'Approved',funded:'Funded',omns:'OMNS'};
-  let fieldsHTML=`<div class="overlay-grid"><div class="field"><label>Amount</label><input id="pop-amount" placeholder="$50,000" value="${esc(existing.amount||'')}"></div><div class="field"><label>Term</label><input id="pop-term" placeholder="6 months" value="${esc(existing.term||'')}"></div><div class="field"><label>Rate / Factor</label><input id="pop-rate" placeholder="1.35" value="${esc(existing.rate||'')}"></div><div class="field"><label>${type==='funded'?'Points':'Payment'}</label><input id="pop-four" placeholder="${type==='funded'?'10%':'$2,250/day'}" value="${esc(type==='funded'?(existing.points||''):(existing.payment||''))}"></div></div>`;
-  if(type==='funded')fieldsHTML+=`<div class="overlay-full"><div class="field"><label>Total Commission</label><input id="pop-comm" placeholder="$5,000" value="${esc(existing.commission||'')}"></div></div>`;
-  if(type==='omns')fieldsHTML+=`<div class="overlay-full"><div class="field"><label>Reason For Passing</label><textarea id="pop-reason" placeholder="Why the client passed..." style="min-height:50px;">${esc(existing.reason||'')}</textarea></div></div>`;
+  let fieldsHTML='';
+  if(type==='funded'){
+    const today=new Date().toISOString().split('T')[0];
+    fieldsHTML=`<div class="overlay-full" style="margin-bottom:10px;"><div class="field"><label>Funded Date</label><input type="date" id="pop-fdate" value="${esc(existing.fundedDate||today)}"></div></div>
+    <div class="overlay-grid"><div class="field"><label>Amount</label><input id="pop-amount" placeholder="$50,000" value="${esc(existing.amount||'')}"></div><div class="field"><label>Term</label><input id="pop-term" placeholder="6 months" value="${esc(existing.term||'')}"></div><div class="field"><label>Rate / Factor</label><input id="pop-rate" placeholder="1.35" value="${esc(existing.rate||'')}"></div><div class="field"><label>Points</label><input id="pop-points" placeholder="10" value="${esc(existing.points||'')}"></div><div class="field"><label>Commission</label><input id="pop-comm" placeholder="$5,000" value="${esc(existing.commission||'')}"></div><div class="field"><label>Fee</label><input id="pop-fee" placeholder="$2,500" value="${esc(existing.fee||'')}"></div></div>
+    <div style="background:rgba(63,185,80,0.08);border:1px solid rgba(63,185,80,0.2);border-radius:var(--radius);padding:10px 12px;margin:10px 0;display:flex;align-items:center;justify-content:space-between;"><span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);">Total Commission</span><span id="pop-total" style="font-size:16px;font-weight:700;font-family:var(--mono);color:var(--green);">$0</span></div>
+    <div class="overlay-full" style="margin-bottom:10px;"><div class="field"><label>Split</label><input id="pop-split" placeholder="e.g. ANT 50% / HOUSE 50%" value="${esc(existing.split||'')}"></div></div>
+    <div style="margin-bottom:16px;"><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:6px;">Deal Type</div><div class="radio-group"><input type="radio" name="pop-dealtype" id="pdt-new" value="New" ${(existing.dealType||'New')==='New'?'checked':''}><label for="pdt-new">New</label><input type="radio" name="pop-dealtype" id="pdt-renew" value="Renewal" ${existing.dealType==='Renewal'?'checked':''}><label for="pdt-renew">Renewal</label></div></div>`;
+  } else {
+    fieldsHTML=`<div class="overlay-grid"><div class="field"><label>Amount</label><input id="pop-amount" placeholder="$50,000" value="${esc(existing.amount||'')}"></div><div class="field"><label>Term</label><input id="pop-term" placeholder="6 months" value="${esc(existing.term||'')}"></div><div class="field"><label>Rate / Factor</label><input id="pop-rate" placeholder="1.35" value="${esc(existing.rate||'')}"></div><div class="field"><label>Payment</label><input id="pop-four" placeholder="$2,250/day" value="${esc(existing.payment||'')}"></div></div>`;
+    if(type==='omns')fieldsHTML+=`<div class="overlay-full"><div class="field"><label>Reason For Passing</label><textarea id="pop-reason" placeholder="Why the client passed..." style="min-height:50px;">${esc(existing.reason||'')}</textarea></div></div>`;
+  }
   const ol=document.createElement('div');ol.className='overlay';ol.id='popup-overlay';
   ol.innerHTML=`<div class="overlay-box" style="border:1px solid ${col.border};"><h3 style="color:${col.title};">${esc(ln)} — ${labels[type]}</h3><div class="overlay-sub">${esc(biz)}</div>${fieldsHTML}<div class="overlay-btns"><button class="btn" onclick="closePopup()">Cancel</button><button class="btn ${col.btn}" onclick="savePopup('${type}','${dealId}','${lk}')">${col.label}</button></div></div>`;
   document.body.appendChild(ol);ol._tr=tr;document.getElementById('pop-amount').focus();
   setupCurrencyField('pop-amount');
-  if(type==='funded')setupCurrencyField('pop-comm');
-  if(type!=='funded')setupCurrencyField('pop-four');
+  if(type==='funded'){
+    setupCurrencyField('pop-comm');setupCurrencyField('pop-fee');
+    const calcTotal=()=>{const c=parseCurrency(document.getElementById('pop-comm').value);const f=parseCurrency(document.getElementById('pop-fee').value);document.getElementById('pop-total').textContent=formatCurrency(String(c+f));};
+    document.getElementById('pop-comm').addEventListener('input',calcTotal);document.getElementById('pop-fee').addEventListener('input',calcTotal);
+    document.getElementById('pop-comm').addEventListener('blur',()=>{setTimeout(calcTotal,50);});document.getElementById('pop-fee').addEventListener('blur',()=>{setTimeout(calcTotal,50);});
+    calcTotal();
+  } else {
+    setupCurrencyField('pop-four');
+  }
 }
 function savePopup(type,dealId,lk){
   const d=deals[dealId];if(!d)return;
-  const base={amount:document.getElementById('pop-amount').value.trim(),term:document.getElementById('pop-term').value.trim(),rate:document.getElementById('pop-rate').value.trim()};
-  if(type==='approved'){d.approvalData=d.approvalData||{};d.approvalData[lk]={...base,payment:document.getElementById('pop-four').value.trim()};}
-  else if(type==='funded'){d.fundedData=d.fundedData||{};d.fundedData[lk]={...base,points:document.getElementById('pop-four').value.trim(),commission:document.getElementById('pop-comm').value.trim()};}
-  else if(type==='omns'){d.omnsData=d.omnsData||{};d.omnsData[lk]={...base,payment:document.getElementById('pop-four').value.trim(),reason:document.getElementById('pop-reason').value.trim()};}
+  if(type==='approved'){
+    d.approvalData=d.approvalData||{};
+    d.approvalData[lk]={amount:document.getElementById('pop-amount').value.trim(),term:document.getElementById('pop-term').value.trim(),rate:document.getElementById('pop-rate').value.trim(),payment:document.getElementById('pop-four').value.trim()};
+  } else if(type==='funded'){
+    d.fundedData=d.fundedData||{};
+    const comm=document.getElementById('pop-comm').value.trim();const fee=document.getElementById('pop-fee').value.trim();
+    const totalComm=formatCurrency(String(parseCurrency(comm)+parseCurrency(fee)));
+    const dtEl=document.querySelector('input[name="pop-dealtype"]:checked');
+    const lf=getAllLendersFlat();const lender=lf.find(l=>l.key===lk);
+    d.fundedData[lk]={fundedDate:document.getElementById('pop-fdate').value.trim(),amount:document.getElementById('pop-amount').value.trim(),term:document.getElementById('pop-term').value.trim(),rate:document.getElementById('pop-rate').value.trim(),points:document.getElementById('pop-points').value.trim(),commission:comm,fee:fee,totalCommission:totalComm,split:document.getElementById('pop-split').value.trim(),dealType:dtEl?dtEl.value:'New'};
+    // Google Sheets webhook
+    if(webhookUrl){
+      const fd=d.fundedData[lk];
+      const payload={iso:d.fields?.iso||'',date:fd.fundedDate,dealName:d.fields?.business||'',funder:lender?lender.name:'',dollarAmount:fd.amount,rate:fd.rate,term:fd.term,points:fd.points,commission:fd.commission,fee:fd.fee,totalCommission:fd.totalCommission,merchantName:d.fields?.name||'',merchantEmail:d.fields?.email||'',merchantCell:d.fields?.number||'',split:fd.split,leadSource:d.fields?.leadsource||'',newRenewal:fd.dealType};
+      fetch(webhookUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(()=>{toast('Sent to Google Sheet');}).catch(()=>{toast('Sheet sync failed',true);});
+    }
+  } else if(type==='omns'){
+    d.omnsData=d.omnsData||{};
+    d.omnsData[lk]={amount:document.getElementById('pop-amount').value.trim(),term:document.getElementById('pop-term').value.trim(),rate:document.getElementById('pop-rate').value.trim(),payment:document.getElementById('pop-four').value.trim(),reason:document.getElementById('pop-reason').value.trim()};
+  }
   const ol=document.getElementById('popup-overlay');if(ol&&ol._tr){ol._tr.classList.remove('sent','approved','declined','funded','omns');ol._tr.classList.add(type);}
   closePopup();saveDealFromDOM(dealId);renderSidebar();renderTabBar();
 }
@@ -632,6 +666,10 @@ function manageReps(){const ex=document.getElementById('reps-overlay');if(ex)ex.
 function addRep(){const inp=document.getElementById('new-rep-name');const n=inp.value.trim();if(!n)return;if(reps.includes(n)){toast('Rep exists');return;}reps.push(n);persist();manageReps();renderAll();}
 function removeRep(i){const n=reps[i];if(!confirm(`Remove ${n}?`))return;reps.splice(i,1);Object.values(deals).forEach(d=>{if(d.rep===n)d.rep='';});persist();manageReps();renderAll();}
 function closeRepsOverlay(){const o=document.getElementById('reps-overlay');if(o)o.remove();}
+
+function openSettings(){const ex=document.getElementById('settings-overlay');if(ex)ex.remove();const o=document.createElement('div');o.className='reps-overlay';o.id='settings-overlay';o.innerHTML=`<div class="reps-box"><h3>Settings</h3><div style="margin-bottom:16px;"><div class="field"><label>Google Sheets Webhook URL</label><input id="webhook-input" placeholder="https://script.google.com/macros/s/..." value="${esc(webhookUrl)}" style="font-size:11px;"></div><p style="font-size:10px;color:var(--text-muted);margin-top:6px;line-height:1.5;">Paste the Web App URL from your Google Apps Script deployment. Funded deals will auto-populate to your sheet.</p></div><div style="display:flex;gap:8px;justify-content:flex-end;"><button class="btn" onclick="closeSettings()">Cancel</button><button class="btn btn-primary btn-sm" onclick="saveWebhook()">Save</button></div></div>`;document.body.appendChild(o);document.getElementById('webhook-input').focus();}
+function saveWebhook(){webhookUrl=document.getElementById('webhook-input').value.trim();saveLocal();if(firebaseUrl&&webhookUrl)fetch(firebaseUrl+'/config/webhookUrl.json',{method:'PUT',body:JSON.stringify(webhookUrl),headers:{'Content-Type':'application/json'}}).catch(()=>{});toast('Webhook URL saved');closeSettings();}
+function closeSettings(){const o=document.getElementById('settings-overlay');if(o)o.remove();}
 
 // Init
 loadLocal();
