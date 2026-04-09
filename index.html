@@ -22,6 +22,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .auth-btn.signed-in{border-color:var(--green);background:var(--green-dim);color:var(--green);cursor:default;}
 .auth-user{font-size:10px;color:var(--text-muted);text-align:center;margin-top:5px;font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .sidebar-actions{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;gap:6px;}
+.sidebar-search{width:100%;font-family:var(--font);font-size:11px;padding:7px 10px;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);outline:none;transition:border-color 0.15s;}
+.sidebar-search:focus{border-color:var(--border-focus);box-shadow:0 0 0 2px var(--accent-dim);}
+.sidebar-search::placeholder{color:#3a414a;}
 .btn{font-family:var(--font);font-size:12px;font-weight:600;padding:7px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;transition:all 0.12s;display:flex;align-items:center;gap:5px;white-space:nowrap;}
 .btn:hover{background:var(--card-hover);border-color:var(--text-muted);}
 .btn-primary{background:var(--accent);color:#fff;border-color:var(--accent);}
@@ -271,6 +274,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="sidebar-header"><div class="sidebar-logo"><span>G</span> Gotham Full Send</div></div>
     <div class="sidebar-auth"><button class="auth-btn" id="auth-btn" onclick="authenticate()">Sign in with Microsoft</button><div class="auth-user" id="auth-user"></div></div>
     <div class="sidebar-actions"><button class="btn btn-primary btn-full" onclick="createDeal()">+ New Deal</button></div>
+    <div style="padding:6px 12px;"><input id="sidebar-search" class="sidebar-search" placeholder="Search deals..." oninput="searchQuery=this.value.toLowerCase();renderSidebar();"></div>
     <div class="deal-list" id="deal-list"></div>
     <div class="sidebar-footer">
       <div style="display:flex;align-items:center;justify-content:space-between;">
@@ -306,7 +310,7 @@ const MONTHS=['January','February','March','April','May','June','July','August',
 const msalConfig={auth:{clientId:'7fdbb596-abb9-44a3-92df-dee7afb70632',authority:'https://login.microsoftonline.com/ec4a3ddf-5ebc-44ad-904a-3eed2baff0e3',redirectUri:window.location.origin+window.location.pathname}};
 const msalInstance=new msal.PublicClientApplication(msalConfig);
 
-let deals={},reps=[],selectedRep=null,activeView='dashboard',lastTab='dashboard',firebaseUrl='https://submissions-tracker-db9ac-default-rtdb.firebaseio.com',ctxTarget=null,accessToken=null,signedInUser=null,dealFiles={},recentlyDeleted=new Set(),expandedReps={},selectedMonth=null,webhookUrl='';
+let deals={},reps=[],selectedRep=null,activeView='dashboard',lastTab='dashboard',firebaseUrl='https://submissions-tracker-db9ac-default-rtdb.firebaseio.com',ctxTarget=null,accessToken=null,signedInUser=null,dealFiles={},recentlyDeleted=new Set(),expandedReps={},selectedMonth=null,webhookUrl='',searchQuery='';
 
 const LS_KEY='gotham_deals',LS_VIEW='gotham_active_view',LS_REPS='gotham_reps',LS_HOOK='gotham_webhook';
 function loadLocal(){try{const r=localStorage.getItem(LS_KEY);if(r)deals=JSON.parse(r);const v=localStorage.getItem(LS_VIEW);if(v)activeView=v;const rr=localStorage.getItem(LS_REPS);if(rr)reps=JSON.parse(rr);const h=localStorage.getItem(LS_HOOK);if(h)webhookUrl=h;}catch(e){}}
@@ -338,38 +342,43 @@ function getAllLendersFlat(){const a=[];Object.entries(LENDERS).forEach(([risk,l
 // Deal helpers
 function newDealData(){const id='deal_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);return{id,rep:'',fields:{},courts:'',rev:{},lenders:{},lenderStates:{},emailFields:{},emailedLenders:[],approvalData:{},fundedData:{},omnsData:{},created:new Date().toISOString()};}
 function getDealLabel(d){return d.fields?.business||'Untitled Deal';}
-function isDealActive(d){if(!d.lenderStates)return true;const states=Object.values(d.lenderStates);return!states.some(v=>v==='funded'||v==='omns');}
-function isDealFunded(d){return d.lenderStates&&Object.values(d.lenderStates).some(v=>v==='funded');}
-function isDealOMNS(d){return!isDealFunded(d)&&d.lenderStates&&Object.values(d.lenderStates).some(v=>v==='omns');}
+function isDealActive(d){if(d.archived)return false;if(!d.lenderStates)return true;const states=Object.values(d.lenderStates);return!states.some(v=>v==='funded'||v==='omns');}
+function isDealFunded(d){return!d.archived&&d.lenderStates&&Object.values(d.lenderStates).some(v=>v==='funded');}
+function isDealOMNS(d){return!d.archived&&!isDealFunded(d)&&d.lenderStates&&Object.values(d.lenderStates).some(v=>v==='omns');}
 function getDealPips(d){let s=0,a=0,dec=0,f=0,o=0;if(d.lenderStates)Object.values(d.lenderStates).forEach(v=>{if(v==='sent')s++;if(v==='approved')a++;if(v==='declined')dec++;if(v==='funded')f++;if(v==='omns')o++;});return{sent:s,approved:a,declined:dec,funded:f,omns:o};}
 function getActiveDeals(){return Object.values(deals).filter(isDealActive).sort((a,b)=>b.created.localeCompare(a.created));}
 function getFundedDeals(){return Object.values(deals).filter(isDealFunded).sort((a,b)=>b.created.localeCompare(a.created));}
 function getOMNSDeals(){return Object.values(deals).filter(isDealOMNS).sort((a,b)=>b.created.localeCompare(a.created));}
+function getArchivedDeals(){return Object.values(deals).filter(d=>d.archived).sort((a,b)=>b.created.localeCompare(a.created));}
 function getDealMonth(d){const dt=d.fields?.date;if(!dt)return null;const parts=dt.split('-');return parts.length>=2?parseInt(parts[1])-1:null;}
 function getDealYear(d){const dt=d.fields?.date;if(!dt)return null;const parts=dt.split('-');return parts.length>=1?parseInt(parts[0]):null;}
 
 // CRUD
 function createDeal(){const d=newDealData();deals[d.id]=d;activeView=d.id;persist();renderAll();}
-function deleteDeal(id){if(!confirm('Delete this deal permanently?'))return;recentlyDeleted.add(id);delete deals[id];delete dealFiles[id];if(activeView===id)activeView='dashboard';saveLocal();deleteDealFromFirebase(id).then(()=>{toast('Deal deleted');}).catch(()=>{toast('Delete failed',true);});renderAll();}
+function deleteDeal(id){if(!confirm('Archive this deal?'))return;deals[id].archived=true;if(activeView===id)activeView='dashboard';persist();renderAll();toast('Deal archived');}
+function restoreDeal(id){if(!deals[id])return;delete deals[id].archived;persist();renderAll();toast('Deal restored');}
+function permanentDelete(id){if(!confirm('Permanently delete this deal? This cannot be undone.'))return;recentlyDeleted.add(id);delete deals[id];delete dealFiles[id];if(activeView===id)activeView='archive';saveLocal();deleteDealFromFirebase(id).then(()=>{toast('Deal permanently deleted');}).catch(()=>{toast('Delete failed',true);});renderAll();}
 
 // Tab bar
-function renderTabBar(){const ctx=['dashboard','funded','omns','monthly'].includes(activeView)?activeView:lastTab;document.getElementById('tab-bar').innerHTML=['dashboard','funded','omns','monthly'].map(v=>{const labels={dashboard:'Dashboard',funded:'Funded',omns:'OMNS',monthly:'Monthly'};return`<div class="tab-dash${ctx===v?' active':''}" onclick="showView('${v}')">${labels[v]}</div>`;}).join('');}
+function renderTabBar(){const ctx=['dashboard','funded','omns','monthly','archive'].includes(activeView)?activeView:lastTab;document.getElementById('tab-bar').innerHTML=['dashboard','funded','omns','monthly','archive'].map(v=>{const labels={dashboard:'Dashboard',funded:'Funded',omns:'OMNS',monthly:'Monthly',archive:'Archive'};return`<div class="tab-dash${ctx===v?' active':''}" onclick="showView('${v}')">${labels[v]}</div>`;}).join('');}
 
-function showView(v){if(activeView!=='dashboard'&&activeView!=='funded'&&activeView!=='omns'&&activeView!=='monthly'&&deals[activeView])saveDealFromDOM(activeView);activeView=v;lastTab=v;saveLocal();renderAll();if(v==='dashboard')renderDashboard();else if(v==='funded')renderFundedView();else if(v==='omns')renderOMNSView();else if(v==='monthly')renderMonthlyView();}
-function openDeal(id){if(activeView!=='dashboard'&&activeView!=='funded'&&activeView!=='omns'&&activeView!=='monthly'&&deals[activeView])saveDealFromDOM(activeView);activeView=id;saveLocal();renderTabBar();renderSidebar();renderDealView(id);}
+function showView(v){if(activeView!=='dashboard'&&activeView!=='funded'&&activeView!=='omns'&&activeView!=='monthly'&&activeView!=='archive'&&deals[activeView])saveDealFromDOM(activeView);activeView=v;lastTab=v;saveLocal();renderAll();if(v==='dashboard')renderDashboard();else if(v==='funded')renderFundedView();else if(v==='omns')renderOMNSView();else if(v==='monthly')renderMonthlyView();else if(v==='archive')renderArchiveView();}
+function openDeal(id){if(activeView!=='dashboard'&&activeView!=='funded'&&activeView!=='omns'&&activeView!=='monthly'&&activeView!=='archive'&&deals[activeView])saveDealFromDOM(activeView);activeView=id;saveLocal();renderTabBar();renderSidebar();renderDealView(id);}
 
 // Sidebar — context-aware per tab
 function getSidebarDeals(){
-  const ctx=['dashboard','funded','omns','monthly'].includes(activeView)?activeView:lastTab;
-  if(ctx==='funded')return getFundedDeals();
-  if(ctx==='omns')return getOMNSDeals();
-  if(ctx==='monthly'){
+  const ctx=['dashboard','funded','omns','monthly','archive'].includes(activeView)?activeView:lastTab;
+  let list;
+  if(ctx==='funded')list=getFundedDeals();
+  else if(ctx==='omns')list=getOMNSDeals();
+  else if(ctx==='archive')list=getArchivedDeals();
+  else if(ctx==='monthly'){
     const now=new Date();const yr=now.getFullYear();
     if(selectedMonth===null)selectedMonth=now.getMonth();
-    return Object.values(deals).filter(d=>getDealMonth(d)===selectedMonth&&getDealYear(d)===yr).sort((a,b)=>b.created.localeCompare(a.created));
-  }
-  // Dashboard or deal view from dashboard context
-  return getActiveDeals();
+    list=Object.values(deals).filter(d=>!d.archived&&getDealMonth(d)===selectedMonth&&getDealYear(d)===yr).sort((a,b)=>b.created.localeCompare(a.created));
+  } else list=getActiveDeals();
+  if(searchQuery)list=list.filter(d=>(getDealLabel(d).toLowerCase().includes(searchQuery)||(d.fields?.name||'').toLowerCase().includes(searchQuery)||(d.rep||'').toLowerCase().includes(searchQuery)));
+  return list;
 }
 
 function renderSidebar(){
@@ -408,22 +417,23 @@ function renderSidebar(){
   list.innerHTML=html||'<div class="empty-state" style="padding:30px 10px;"><p style="font-size:12px;">No deals</p></div>';
 }
 function dealItemHTML(d){
-  const pips=getDealPips(d);const isActive=activeView===d.id;
+  const pips=getDealPips(d);const isActive=activeView===d.id;const isArchiveCtx=lastTab==='archive'||activeView==='archive';
   let pipHtml='';
   if(pips.sent)pipHtml+=`<span class="deal-pip pip-y">${pips.sent}S</span>`;
   if(pips.approved)pipHtml+=`<span class="deal-pip pip-b">${pips.approved}A</span>`;
   if(pips.declined)pipHtml+=`<span class="deal-pip pip-r">${pips.declined}D</span>`;
   if(pips.funded)pipHtml+=`<span class="deal-pip pip-g">${pips.funded}F</span>`;
   if(pips.omns)pipHtml+=`<span class="deal-pip" style="background:rgba(219,109,40,0.10);color:var(--orange);">${pips.omns}O</span>`;
-  return`<div class="deal-item${isActive?' active':''}" onclick="openDeal('${d.id}')"><div style="flex:1;overflow:hidden;"><div class="deal-biz">${esc(getDealLabel(d))}</div><div style="display:flex;align-items:center;gap:6px;margin-top:2px;"><span style="font-size:9px;color:var(--text-muted);font-family:var(--mono);">${d.fields?.date||''}</span>${pipHtml}</div></div><span class="deal-close" onclick="event.stopPropagation();deleteDeal('${d.id}')">&times;</span></div>`;
+  const closeBtn=isArchiveCtx?`<span class="deal-close" onclick="event.stopPropagation();restoreDeal('${d.id}')" title="Restore" style="color:var(--green);">↩</span>`:`<span class="deal-close" onclick="event.stopPropagation();deleteDeal('${d.id}')">&times;</span>`;
+  return`<div class="deal-item${isActive?' active':''}" onclick="openDeal('${d.id}')"><div style="flex:1;overflow:hidden;"><div class="deal-biz">${esc(getDealLabel(d))}</div><div style="display:flex;align-items:center;gap:6px;margin-top:2px;"><span style="font-size:9px;color:var(--text-muted);font-family:var(--mono);">${d.fields?.date||''}</span>${pipHtml}</div></div>${closeBtn}</div>`;
 }
 function toggleRep(r){expandedReps[r]=!expandedReps[r];renderSidebar();}
-function selectRep(r){selectedRep=r;renderSidebar();if(['dashboard','funded','omns','monthly'].includes(activeView)){renderTabBar();if(activeView==='dashboard')renderDashboard();else if(activeView==='funded')renderFundedView();else if(activeView==='omns')renderOMNSView();else if(activeView==='monthly')renderMonthlyView();}}
+function selectRep(r){selectedRep=r;renderSidebar();if(['dashboard','funded','omns','monthly','archive'].includes(activeView)){renderTabBar();if(activeView==='dashboard')renderDashboard();else if(activeView==='funded')renderFundedView();else if(activeView==='omns')renderOMNSView();else if(activeView==='monthly')renderMonthlyView();else if(activeView==='archive')renderArchiveView();}}
 
-function renderAll(){renderTabBar();renderSidebar();const v=activeView;if(v==='dashboard')renderDashboard();else if(v==='funded')renderFundedView();else if(v==='omns')renderOMNSView();else if(v==='monthly')renderMonthlyView();else if(deals[v])renderDealView(v);else{activeView='dashboard';renderTabBar();renderDashboard();}}
+function renderAll(){renderTabBar();renderSidebar();const v=activeView;if(v==='dashboard')renderDashboard();else if(v==='funded')renderFundedView();else if(v==='omns')renderOMNSView();else if(v==='monthly')renderMonthlyView();else if(v==='archive')renderArchiveView();else if(deals[v])renderDealView(v);else{activeView='dashboard';renderTabBar();renderDashboard();}}
 
 // Light render for polling — updates sidebar+tabs without touching deal view (prevents focus loss)
-function renderChrome(){renderTabBar();renderSidebar();if(activeView==='dashboard')renderDashboard();else if(activeView==='funded')renderFundedView();else if(activeView==='omns')renderOMNSView();else if(activeView==='monthly')renderMonthlyView();}
+function renderChrome(){renderTabBar();renderSidebar();if(activeView==='dashboard')renderDashboard();else if(activeView==='funded')renderFundedView();else if(activeView==='omns')renderOMNSView();else if(activeView==='monthly')renderMonthlyView();else if(activeView==='archive')renderArchiveView();}
 
 // Dashboard
 function renderDashboard(){
@@ -455,9 +465,9 @@ function renderFundedView(){
   if(selectedRep==='__unassigned__')fd=fd.filter(d=>!d.rep);
   else if(selectedRep)fd=fd.filter(d=>d.rep===selectedRep);
   const lf=getAllLendersFlat();const entries=[];
-  fd.forEach(d=>{if(!d.lenderStates||!d.fundedData)return;Object.entries(d.lenderStates).forEach(([lk,st])=>{if(st==='funded'&&d.fundedData[lk]){const f=d.fundedData[lk];const l=lf.find(x=>x.key===lk);entries.push({biz:d.fields?.business||'—',ln:l?l.name:lk,amt:f.amount||'',term:f.term||'',rate:f.rate||'',pts:f.points||'',comm:f.commission||'',fee:f.fee||'',totComm:f.totalCommission||'',split:f.split||'',dealType:f.dealType||'',rep:d.rep||'—',did:d.id});}});});
+  fd.forEach(d=>{if(!d.lenderStates||!d.fundedData)return;Object.entries(d.lenderStates).forEach(([lk,st])=>{if(st==='funded'&&d.fundedData[lk]){const f=d.fundedData[lk];const l=lf.find(x=>x.key===lk);entries.push({biz:d.fields?.business||'—',ln:l?l.name:lk,amt:f.amount||'',term:f.term||'',rate:f.rate||'',pts:f.points||'',comm:f.commission||'',fee:f.fee||'',totComm:f.totalCommission||'',dealType:f.dealType||'',rep:d.rep||'—',did:d.id});}});});
   let totF=0,totC=0;entries.forEach(e=>{totF+=parseCurrency(e.amt);totC+=parseCurrency(e.totComm||e.comm);});
-  c.innerHTML=`<div class="dash"><div class="dash-hero"><h2>Funded Deals</h2><p>Deals that have closed and funded.</p></div><div class="stats-row"><div class="stat-card"><div class="stat-val stat-green">$${Math.round(totF).toLocaleString()}</div><div class="stat-label">Total Funded</div></div><div class="stat-card"><div class="stat-val stat-green">${entries.length}</div><div class="stat-label">Deals Funded</div></div><div class="stat-card"><div class="stat-val stat-green">$${Math.round(totC).toLocaleString()}</div><div class="stat-label">Total Commission</div></div></div>${entries.length?`<div class="section"><div class="section-title">Funded Details</div><div style="overflow-x:auto;"><table class="dash-table"><thead><tr><th>Business</th><th>Lender</th><th>Amount</th><th>Term</th><th>Rate</th><th>Pts</th><th>Comm</th><th>Fee</th><th>Total</th><th>Split</th><th>Type</th><th>Rep</th></tr></thead><tbody>${entries.map(e=>`<tr onclick="openDeal('${e.did}')"><td class="dt-biz">${esc(e.biz)}</td><td style="font-size:11px;">${esc(e.ln)}</td><td style="font-family:var(--mono);font-size:11px;color:var(--green);font-weight:600;">${esc(e.amt)}</td><td style="font-family:var(--mono);font-size:11px;">${esc(e.term)}</td><td style="font-family:var(--mono);font-size:11px;">${esc(e.rate)}</td><td style="font-family:var(--mono);font-size:11px;">${esc(e.pts)}</td><td style="font-family:var(--mono);font-size:11px;">${esc(e.comm)}</td><td style="font-family:var(--mono);font-size:11px;">${esc(e.fee)}</td><td style="font-family:var(--mono);font-size:11px;color:var(--green);font-weight:600;">${esc(e.totComm)}</td><td style="font-size:11px;">${esc(e.split)}</td><td style="font-size:11px;">${esc(e.dealType)}</td><td style="font-size:11px;color:var(--accent);">${esc(e.rep)}</td></tr>`).join('')}</tbody></table></div></div>`:'<div class="empty-state"><h3>No funded deals yet</h3></div>'}</div>`;
+  c.innerHTML=`<div class="dash"><div class="dash-hero"><h2>Funded Deals</h2><p>Deals that have closed and funded.</p></div><div class="stats-row"><div class="stat-card"><div class="stat-val stat-green">$${Math.round(totF).toLocaleString()}</div><div class="stat-label">Total Funded</div></div><div class="stat-card"><div class="stat-val stat-green">${entries.length}</div><div class="stat-label">Deals Funded</div></div><div class="stat-card"><div class="stat-val stat-green">$${Math.round(totC).toLocaleString()}</div><div class="stat-label">Total Commission</div></div></div>${entries.length?`<div class="section"><div class="section-title">Funded Details</div><div style="overflow-x:auto;"><table class="dash-table"><thead><tr><th>Business</th><th>Lender</th><th>Amount</th><th>Term</th><th>Rate</th><th>Pts</th><th>Comm</th><th>Fee</th><th>Total</th><th>Type</th><th>Rep</th></tr></thead><tbody>${entries.map(e=>`<tr onclick="openDeal('${e.did}')"><td class="dt-biz">${esc(e.biz)}</td><td style="font-size:11px;">${esc(e.ln)}</td><td style="font-family:var(--mono);font-size:11px;color:var(--green);font-weight:600;">${esc(e.amt)}</td><td style="font-family:var(--mono);font-size:11px;">${esc(e.term)}</td><td style="font-family:var(--mono);font-size:11px;">${esc(e.rate)}</td><td style="font-family:var(--mono);font-size:11px;">${esc(e.pts)}</td><td style="font-family:var(--mono);font-size:11px;">${esc(e.comm)}</td><td style="font-family:var(--mono);font-size:11px;">${esc(e.fee)}</td><td style="font-family:var(--mono);font-size:11px;color:var(--green);font-weight:600;">${esc(e.totComm)}</td><td style="font-size:11px;">${esc(e.dealType)}</td><td style="font-size:11px;color:var(--accent);">${esc(e.rep)}</td></tr>`).join('')}</tbody></table></div></div>`:'<div class="empty-state"><h3>No funded deals yet</h3></div>'}</div>`;
 }
 
 // OMNS view
@@ -468,6 +478,14 @@ function renderOMNSView(){
   const lf=getAllLendersFlat();const entries=[];
   od.forEach(d=>{if(!d.lenderStates||!d.omnsData)return;Object.entries(d.lenderStates).forEach(([lk,st])=>{if(st==='omns'&&d.omnsData[lk]){const o=d.omnsData[lk];const l=lf.find(x=>x.key===lk);entries.push({biz:d.fields?.business||'—',ln:l?l.name:lk,amt:o.amount||'',term:o.term||'',rate:o.rate||'',pay:o.payment||'',reason:o.reason||'',rep:d.rep||'—',did:d.id});}});});
   c.innerHTML=`<div class="dash"><div class="dash-hero"><h2>Offers Made Not Sold</h2><p>Approved deals the client did not accept.</p></div><div class="stats-row"><div class="stat-card"><div class="stat-val" style="color:var(--orange);">${entries.length}</div><div class="stat-label">Total OMNS</div></div></div>${entries.length?`<div class="section"><div class="section-title">OMNS Details</div><table class="dash-table"><thead><tr><th>Business</th><th>Lender</th><th>Amount</th><th>Term</th><th>Rate</th><th>Payment</th><th>Reason</th><th>Rep</th></tr></thead><tbody>${entries.map(e=>`<tr onclick="openDeal('${e.did}')"><td class="dt-biz">${esc(e.biz)}</td><td style="font-size:12px;">${esc(e.ln)}</td><td style="font-family:var(--mono);font-size:12px;color:var(--orange);font-weight:600;">${esc(e.amt)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(e.term)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(e.rate)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(e.pay)}</td><td style="font-size:12px;color:var(--orange);">${esc(e.reason)}</td><td style="font-size:12px;color:var(--accent);">${esc(e.rep)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty-state"><h3>No OMNS deals yet</h3></div>'}</div>`;
+}
+
+// Archive view
+function renderArchiveView(){
+  const c=document.getElementById('content');let ad=getArchivedDeals();
+  if(selectedRep==='__unassigned__')ad=ad.filter(d=>!d.rep);
+  else if(selectedRep)ad=ad.filter(d=>d.rep===selectedRep);
+  c.innerHTML=`<div class="dash"><div class="dash-hero"><h2>Archive</h2><p>Archived deals. Restore or permanently delete.</p></div><div class="stats-row"><div class="stat-card"><div class="stat-val" style="color:var(--text-muted);">${ad.length}</div><div class="stat-label">Archived</div></div></div>${ad.length?`<div class="section"><div class="section-title">Archived Deals</div><table class="dash-table"><thead><tr><th>Business</th><th>Date</th><th>Rep</th><th>Actions</th></tr></thead><tbody>${ad.map(d=>`<tr><td class="dt-biz" style="cursor:pointer;" onclick="openDeal('${d.id}')">${esc(getDealLabel(d))}</td><td style="font-family:var(--mono);font-size:12px;color:var(--text-muted);">${esc(d.fields?.date||'—')}</td><td style="font-size:12px;color:var(--accent);">${esc(d.rep||'—')}</td><td style="display:flex;gap:6px;"><button class="btn btn-sm" style="color:var(--green);border-color:var(--green);font-size:10px;" onclick="restoreDeal('${d.id}')">Restore</button><button class="btn btn-danger btn-sm" style="font-size:10px;" onclick="permanentDelete('${d.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty-state"><h3>No archived deals</h3></div>'}</div>`;
 }
 
 // Monthly view
@@ -572,7 +590,6 @@ function showPopup(type,tr,dealId){
     fieldsHTML=`<div class="overlay-full" style="margin-bottom:10px;"><div class="field"><label>Funded Date</label><input type="date" id="pop-fdate" value="${esc(existing.fundedDate||today)}"></div></div>
     <div class="overlay-grid"><div class="field"><label>Amount</label><input id="pop-amount" placeholder="$50,000" value="${esc(existing.amount||'')}"></div><div class="field"><label>Term</label><input id="pop-term" placeholder="6 months" value="${esc(existing.term||'')}"></div><div class="field"><label>Rate / Factor</label><input id="pop-rate" placeholder="1.35" value="${esc(existing.rate||'')}"></div><div class="field"><label>Points</label><input id="pop-points" placeholder="10" value="${esc(existing.points||'')}"></div><div class="field"><label>Commission</label><input id="pop-comm" placeholder="$5,000" value="${esc(existing.commission||'')}"></div><div class="field"><label>Fee</label><input id="pop-fee" placeholder="$2,500" value="${esc(existing.fee||'')}"></div></div>
     <div style="background:rgba(63,185,80,0.08);border:1px solid rgba(63,185,80,0.2);border-radius:var(--radius);padding:10px 12px;margin:10px 0;display:flex;align-items:center;justify-content:space-between;"><span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);">Total Commission</span><span id="pop-total" style="font-size:16px;font-weight:700;font-family:var(--mono);color:var(--green);">$0</span></div>
-    <div class="overlay-full" style="margin-bottom:10px;"><div class="field"><label>Split</label><input id="pop-split" placeholder="e.g. ANT 50% / HOUSE 50%" value="${esc(existing.split||'')}"></div></div>
     <div style="margin-bottom:16px;"><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:6px;">Deal Type</div><div class="radio-group"><input type="radio" name="pop-dealtype" id="pdt-new" value="New" ${(existing.dealType||'New')==='New'?'checked':''}><label for="pdt-new">New</label><input type="radio" name="pop-dealtype" id="pdt-renew" value="Renewal" ${existing.dealType==='Renewal'?'checked':''}><label for="pdt-renew">Renewal</label></div></div>`;
   } else {
     fieldsHTML=`<div class="overlay-grid"><div class="field"><label>Amount</label><input id="pop-amount" placeholder="$50,000" value="${esc(existing.amount||'')}"></div><div class="field"><label>Term</label><input id="pop-term" placeholder="6 months" value="${esc(existing.term||'')}"></div><div class="field"><label>Rate / Factor</label><input id="pop-rate" placeholder="1.35" value="${esc(existing.rate||'')}"></div><div class="field"><label>Payment</label><input id="pop-four" placeholder="$2,250/day" value="${esc(existing.payment||'')}"></div></div>`;
@@ -603,11 +620,11 @@ function savePopup(type,dealId,lk){
     const totalComm=formatCurrency(String(parseCurrency(comm)+parseCurrency(fee)));
     const dtEl=document.querySelector('input[name="pop-dealtype"]:checked');
     const lf=getAllLendersFlat();const lender=lf.find(l=>l.key===lk);
-    d.fundedData[lk]={fundedDate:document.getElementById('pop-fdate').value.trim(),amount:document.getElementById('pop-amount').value.trim(),term:document.getElementById('pop-term').value.trim(),rate:document.getElementById('pop-rate').value.trim(),points:document.getElementById('pop-points').value.trim(),commission:comm,fee:fee,totalCommission:totalComm,split:document.getElementById('pop-split').value.trim(),dealType:dtEl?dtEl.value:'New'};
+    d.fundedData[lk]={fundedDate:document.getElementById('pop-fdate').value.trim(),amount:document.getElementById('pop-amount').value.trim(),term:document.getElementById('pop-term').value.trim(),rate:document.getElementById('pop-rate').value.trim(),points:document.getElementById('pop-points').value.trim(),commission:comm,fee:fee,totalCommission:totalComm,dealType:dtEl?dtEl.value:'New'};
     // Google Sheets webhook
     if(webhookUrl){
       const fd=d.fundedData[lk];
-      const payload={iso:d.fields?.iso||'',date:fd.fundedDate,dealName:d.fields?.business||'',funder:lender?lender.name:'',dollarAmount:fd.amount,rate:fd.rate,term:fd.term,points:fd.points,commission:fd.commission,fee:fd.fee,totalCommission:fd.totalCommission,merchantName:d.fields?.name||'',merchantEmail:d.fields?.email||'',merchantCell:d.fields?.number||'',split:fd.split,leadSource:d.fields?.leadsource||'',newRenewal:fd.dealType};
+      const payload={iso:d.fields?.iso||'',date:fd.fundedDate,dealName:d.fields?.business||'',funder:lender?lender.name:'',dollarAmount:fd.amount,rate:fd.rate,term:fd.term,points:fd.points,commission:fd.commission,fee:fd.fee,totalCommission:fd.totalCommission,merchantName:d.fields?.name||'',merchantEmail:d.fields?.email||'',merchantCell:d.fields?.number||'',split:'',leadSource:d.fields?.leadsource||'',newRenewal:fd.dealType};
       fetch(webhookUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(()=>{toast('Sent to Google Sheet');}).catch(()=>{toast('Sheet sync failed',true);});
     }
   } else if(type==='omns'){
