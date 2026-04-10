@@ -88,6 +88,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .tab-dash{padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text-muted);border-bottom:2px solid transparent;transition:all 0.12s;white-space:nowrap;}
 .tab-dash:hover{color:var(--text);}
 .tab-dash.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-deal{display:flex;align-items:center;gap:6px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;color:var(--text-muted);background:var(--card);border:1px solid var(--border);border-bottom:none;border-radius:8px 8px 0 0;margin-bottom:-1px;transition:all 0.12s;white-space:nowrap;max-width:160px;}
+.tab-deal:hover{color:var(--text);background:var(--card-hover);}
+.tab-deal.active{color:var(--accent);background:var(--bg);border-color:var(--accent);border-bottom:1px solid var(--bg);}
+.tab-deal .tab-name{overflow:hidden;text-overflow:ellipsis;}
+.tab-deal .tab-x{font-size:13px;padding:0 2px;border-radius:3px;opacity:0.5;line-height:1;}
+.tab-deal .tab-x:hover{opacity:1;background:var(--red-dim);color:var(--red);}
 .content{flex:1;overflow-y:auto;padding:24px;background:var(--bg);}
 .content::-webkit-scrollbar{width:6px;}
 .content::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
@@ -339,7 +345,7 @@ function canSee(d){if(isAdmin())return true;const n=myRepName();if(!n)return fal
 
 const msalConfig={auth:{clientId:'7fdbb596-abb9-44a3-92df-dee7afb70632',authority:'https://login.microsoftonline.com/ec4a3ddf-5ebc-44ad-904a-3eed2baff0e3',redirectUri:window.location.origin+window.location.pathname}};
 const msalInstance=new msal.PublicClientApplication(msalConfig);
-let deals={},reps=[],selectedRep=null,activeView='dashboard',lastTab='dashboard',firebaseUrl='https://submissions-tracker-db9ac-default-rtdb.firebaseio.com',ctxTarget=null,accessToken=null,signedInUser=null,dealFiles={},recentlyDeleted=new Set(),expandedReps={},selectedMonth=null,webhookUrl='',searchQuery='';
+let deals={},reps=[],selectedRep=null,activeView='dashboard',lastTab='dashboard',firebaseUrl='https://submissions-tracker-db9ac-default-rtdb.firebaseio.com',ctxTarget=null,accessToken=null,signedInUser=null,dealFiles={},recentlyDeleted=new Set(),expandedReps={},selectedMonth=null,webhookUrl='',searchQuery='',openTabs=[];
 
 const LS_KEY='gotham_deals',LS_VIEW='gotham_active_view',LS_REPS='gotham_reps',LS_HOOK='gotham_webhook';
 function loadLocal(){try{const r=localStorage.getItem(LS_KEY);if(r)deals=JSON.parse(r);const v=localStorage.getItem(LS_VIEW);if(v)activeView=v;const rr=localStorage.getItem(LS_REPS);if(rr)reps=JSON.parse(rr);const h=localStorage.getItem(LS_HOOK);if(h)webhookUrl=h;}catch(e){}}
@@ -381,14 +387,21 @@ function getDealYear(d){const dt=d.fields?.date;if(!dt)return null;return parseI
 
 // CRUD
 function createDeal(){const d=newDealData();const mn=myRepName();if(mn&&REP_CHECKLIST.includes(mn))d.reps=[mn];deals[d.id]=d;activeView=d.id;persist();renderAll();}
-function deleteDeal(id){if(!confirm('Archive this deal?'))return;deals[id].archived=true;if(activeView===id)activeView='dashboard';persist();renderAll();toast('Deal archived');}
+function deleteDeal(id){if(!confirm('Archive this deal?'))return;deals[id].archived=true;openTabs=openTabs.filter(t=>t!==id);if(activeView===id){if(openTabs.length)switchToTab(openTabs[openTabs.length-1]);else{activeView='dashboard';}}persist();renderAll();toast('Deal archived');}
 function restoreDeal(id){if(!deals[id])return;delete deals[id].archived;persist();renderAll();toast('Deal restored');}
-function permanentDelete(id){if(!confirm('Permanently delete this deal? This cannot be undone.'))return;recentlyDeleted.add(id);delete deals[id];delete dealFiles[id];if(activeView===id)activeView='archive';saveLocal();deleteDealFromFirebase(id).then(()=>{toast('Deal permanently deleted');}).catch(()=>{toast('Delete failed',true);});renderAll();}
+function permanentDelete(id){if(!confirm('Permanently delete this deal? This cannot be undone.'))return;recentlyDeleted.add(id);delete deals[id];delete dealFiles[id];openTabs=openTabs.filter(t=>t!==id);if(activeView===id)activeView='archive';saveLocal();deleteDealFromFirebase(id).then(()=>{toast('Deal permanently deleted');}).catch(()=>{toast('Delete failed',true);});renderAll();}
 
 // Tab bar
-function renderTabBar(){const ctx=['dashboard','funded','omns','monthly','archive'].includes(activeView)?activeView:lastTab;document.getElementById('tab-bar').innerHTML=['dashboard','funded','omns','monthly','archive'].map(v=>{const labels={dashboard:'Active Deals',funded:'Funded',omns:'OMNS',monthly:'Monthly',archive:'Archive'};return`<div class="tab-dash${ctx===v?' active':''}" onclick="showView('${v}')">${labels[v]}</div>`;}).join('');}
+function renderTabBar(){
+  const ctx=['dashboard','funded','omns','monthly','archive'].includes(activeView)?activeView:lastTab;
+  const mainTabs=['dashboard','funded','omns','monthly','archive'].map(v=>{const labels={dashboard:'Active Deals',funded:'Funded',omns:'OMNS',monthly:'Monthly',archive:'Archive'};return`<div class="tab-dash${ctx===v&&!deals[activeView]?' active':''}" onclick="showView('${v}')">${labels[v]}</div>`;}).join('');
+  const dealTabs=openTabs.map(id=>{const d=deals[id];if(!d)return'';const name=getDealLabel(d);return`<div class="tab-deal${activeView===id?' active':''}" onclick="switchToTab('${id}')"><span class="tab-name">${esc(name)}</span><span class="tab-x" onclick="event.stopPropagation();closeTab('${id}')">&times;</span></div>`;}).join('');
+  document.getElementById('tab-bar').innerHTML=mainTabs+dealTabs;
+}
 function showView(v){if(!['dashboard','funded','omns','monthly','archive'].includes(activeView)&&deals[activeView])saveDealFromDOM(activeView);activeView=v;lastTab=v;saveLocal();renderAll();}
-function openDeal(id){if(!['dashboard','funded','omns','monthly','archive'].includes(activeView)&&deals[activeView])saveDealFromDOM(activeView);activeView=id;saveLocal();renderTabBar();renderSidebar();renderDealView(id);}
+function openDeal(id){if(!['dashboard','funded','omns','monthly','archive'].includes(activeView)&&deals[activeView])saveDealFromDOM(activeView);if(!openTabs.includes(id))openTabs.push(id);activeView=id;saveLocal();renderTabBar();renderSidebar();renderDealView(id);}
+function switchToTab(id){if(!['dashboard','funded','omns','monthly','archive'].includes(activeView)&&deals[activeView])saveDealFromDOM(activeView);activeView=id;saveLocal();renderTabBar();renderSidebar();renderDealView(id);}
+function closeTab(id){if(deals[id])saveDealFromDOM(id);openTabs=openTabs.filter(t=>t!==id);if(activeView===id){if(openTabs.length)switchToTab(openTabs[openTabs.length-1]);else showView(lastTab);}else{renderTabBar();}}
 
 // Sidebar
 function getSidebarDeals(){
@@ -472,8 +485,8 @@ function renderMonthlyView(){
 function renderDealView(id){
   const d=deals[id];if(!d)return;d.emailFields=d.emailFields||{};const ef=d.emailFields;const c=document.getElementById('content');const dr=getDR(d);
   const repPickerHTML=`<div class="field"><label>Reps</label><div class="rep-picker" id="rp-${id}"><div class="rep-picker-display" onclick="toggleRepPicker('${id}')">${dr.length?dr.map(r=>`<span class="rep-tag">${esc(r)}</span>`).join(''):'<span style="color:var(--text-muted);font-size:11px;">Select reps...</span>'}</div><div class="rep-picker-dd" id="rpdd-${id}"><input class="rep-picker-search" placeholder="Search reps..." oninput="filterRepPicker('${id}',this.value)">${REP_CHECKLIST.map(r=>`<div class="rep-picker-item" data-rep="${esc(r)}" onclick="toggleRepCheck('${id}','${esc(r)}')"><div class="rep-picker-cb${dr.includes(r)?' checked':''}">${dr.includes(r)?'&#10003;':''}</div><span>${esc(r)}</span></div>`).join('')}</div></div></div>`;
-  c.innerHTML=`<div class="deal-view" data-deal-id="${id}"><div class="deal-header"><h2>${esc(getDealLabel(d))}</h2><div class="deal-header-actions"><button class="btn btn-danger btn-sm" onclick="deleteDeal('${id}')">Archive</button><button class="btn btn-sm" onclick="window.print()">Print</button></div></div>
-  <div class="section"><div class="section-title">Deal Information</div><div class="fields-grid">${repPickerHTML}<div class="field"><label>Date</label><input type="date" data-f="date" value="${d.fields?.date||''}"></div><div class="field"><label>Business</label><input data-f="business" placeholder="Business name" value="${esc(d.fields?.business||'')}"></div><div class="field"><label>Industry</label><input data-f="industry" placeholder="Industry type" value="${esc(d.fields?.industry||'')}"></div><div class="field"><label>Name</label><input data-f="name" placeholder="Contact name" value="${esc(d.fields?.name||'')}"></div><div class="field"><label>TIB</label><input data-f="tib" placeholder="Time in business" value="${esc(d.fields?.tib||'')}"></div><div class="field"><label>Credit</label><input data-f="credit" placeholder="Credit score" value="${esc(d.fields?.credit||'')}"></div><div class="field"><label>State</label><input data-f="state" placeholder="ST" maxlength="2" style="text-transform:uppercase" value="${esc(d.fields?.state||'')}"></div><div class="field"><label>ISO</label><input data-f="iso" placeholder="ISO name" value="${esc(d.fields?.iso||'')}"></div><div class="field"><label>Number</label><input data-f="number" placeholder="Phone number" value="${esc(d.fields?.number||'')}"></div><div class="field field-wide"><label>Email</label><input data-f="email" placeholder="Email address" type="email" value="${esc(d.fields?.email||'')}"></div><div class="field"><label>Lead Source</label><input data-f="leadsource" placeholder="Source" value="${esc(d.fields?.leadsource||'')}"></div></div></div>
+  c.innerHTML=`<div class="deal-view" data-deal-id="${id}"><div class="deal-header"><h2 id="dv-title">${esc(getDealLabel(d))}</h2><div class="deal-header-actions"><button class="btn btn-danger btn-sm" onclick="deleteDeal('${id}')">Archive</button><button class="btn btn-sm" onclick="window.print()">Print</button></div></div>
+  <div class="section"><div class="section-title">Deal Information</div><div class="fields-grid">${repPickerHTML}<div class="field"><label>Date</label><input type="date" data-f="date" value="${d.fields?.date||''}"></div><div class="field"><label>Business Name</label><input data-f="business" placeholder="Business name" value="${esc(d.fields?.business||'')}"></div><div class="field"><label>Industry</label><input data-f="industry" placeholder="Industry type" value="${esc(d.fields?.industry||'')}"></div><div class="field"><label>Name</label><input data-f="name" placeholder="Contact name" value="${esc(d.fields?.name||'')}"></div><div class="field"><label>TIB</label><input data-f="tib" placeholder="Time in business" value="${esc(d.fields?.tib||'')}"></div><div class="field"><label>Credit</label><input data-f="credit" placeholder="Credit score" value="${esc(d.fields?.credit||'')}"></div><div class="field"><label>State</label><input data-f="state" placeholder="ST" maxlength="2" style="text-transform:uppercase" value="${esc(d.fields?.state||'')}"></div><div class="field"><label>ISO</label><input data-f="iso" placeholder="ISO name" value="${esc(d.fields?.iso||'')}"></div><div class="field"><label>Number</label><input data-f="number" placeholder="Phone number" value="${esc(d.fields?.number||'')}"></div><div class="field field-wide"><label>Email</label><input data-f="email" placeholder="Email address" type="email" value="${esc(d.fields?.email||'')}"></div><div class="field"><label>Lead Source</label><input data-f="leadsource" placeholder="Source" value="${esc(d.fields?.leadsource||'')}"></div></div></div>
   <div class="section"><div class="section-title">Monthly Revenue</div><table class="rev-table"><thead><tr><th style="width:34px">Mo</th><th>Monthly Revs</th><th># of Deposits</th><th>ADB</th><th>MCA Positions</th><th>Balance</th><th>Payment - D/W</th></tr></thead><tbody>${[1,2,3,4].map(i=>`<tr><td class="row-label"><input data-mo="${i}" maxlength="2" placeholder="—" value="${esc(d.rev?.['mo-'+i]||'')}"></td>${['rev','deps','adb','mca','bal','pay'].map(f=>`<td><input data-rev="${i}-${f}" value="${esc(d.rev?.[i+'-'+f]||'')}"></td>`).join('')}</tr>`).join('')}</tbody></table></div>
   <div class="section"><div class="inline-group"><div><span style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">In Courts?</span><div class="radio-group" style="margin-top:5px"><input type="radio" name="courts-${id}" id="cy-${id}" value="Yes" ${d.courts==='Yes'?'checked':''}><label for="cy-${id}">Yes</label><input type="radio" name="courts-${id}" id="cn-${id}" value="No" ${d.courts==='No'?'checked':''}><label for="cn-${id}">No</label></div></div><div style="flex:1"><div class="field"><label>Most Recent Funding</label><input data-f="recentfunding" placeholder="Details" value="${esc(d.fields?.recentfunding||'')}"></div></div></div></div>
   <div class="section section-email"><div class="section-title">Submission Email</div><div class="fields-grid"><div class="field field-wide"><label>Subject Line</label><input data-ef="subject" placeholder="***New Deal*** - " value="${esc(ef.subject||'***New Deal*** - ')}"></div><div class="field"><label>Status</label><input data-ef="status" placeholder="e.g. SEEKING MAX" value="${esc(ef.status||'')}"></div><div class="field"><label>Notes</label><input data-ef="notes" placeholder="Additional notes" value="${esc(ef.notes||'')}"></div><div class="field field-wide"><label>Current Balances</label><textarea data-ef="balances" placeholder="e.g. NONE">${esc(ef.balances||'')}</textarea></div><div class="field field-wide"><label>CC (Optional)</label><input data-ef="cc" placeholder="email1@example.com, email2@example.com" value="${esc(ef.cc||'')}"></div></div><div class="drop-zone" id="drop-zone-${id}"><p>Drag & Drop Files Here or Click to Browse</p></div><input type="file" id="file-input-${id}" multiple style="display:none;"><div id="file-list-${id}"></div></div>
@@ -481,7 +494,25 @@ function renderDealView(id){
   <button class="btn-send" id="send-btn-${id}" onclick="sendToHighlighted('${id}')">Send to Highlighted Lenders</button>
   <div class="progress-section" id="progress-${id}"><div class="progress-bar"><div class="progress-fill" id="pf-${id}">0%</div></div><div class="progress-text" id="pt-${id}"></div></div><div id="send-results-${id}"></div></div>`;
   buildLenderTables(id,d);setupFileHandling(id);renderDealFiles(id);
-  const view=c.querySelector('.deal-view');view.addEventListener('input',()=>{saveDealFromDOM(id);renderSidebar();});view.addEventListener('change',()=>{saveDealFromDOM(id);renderSidebar();});
+  const view=c.querySelector('.deal-view');
+  view.addEventListener('input',(e)=>{
+    saveDealFromDOM(id);renderSidebar();
+    if(e.target.dataset.f==='business'){const v=e.target.value||'Untitled Deal';document.getElementById('dv-title').textContent=v;renderTabBar();}
+  });
+  view.addEventListener('change',()=>{saveDealFromDOM(id);renderSidebar();});
+  // Arrow key navigation between fields
+  view.addEventListener('keydown',(e)=>{
+    if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;
+    const el=e.target;if(el.tagName!=='INPUT'||el.type==='date'||el.type==='file')return;
+    if(e.key==='ArrowLeft'&&el.selectionStart!==0)return;
+    if(e.key==='ArrowRight'&&el.selectionStart!==el.value.length)return;
+    const inputs=Array.from(view.querySelectorAll('input:not([type=radio]):not([type=file]):not([type=date]),textarea'));
+    const idx=inputs.indexOf(el);if(idx===-1)return;
+    let next=-1;
+    if(e.key==='ArrowDown'||e.key==='ArrowRight')next=idx+1;
+    else if(e.key==='ArrowUp'||e.key==='ArrowLeft')next=idx-1;
+    if(next>=0&&next<inputs.length){e.preventDefault();inputs[next].focus();}
+  });
 }
 
 // Rep picker functions
@@ -542,7 +573,7 @@ function dashCtxOpen(){if(!dashCtxData)return;openDeal(dashCtxData.dealId);hideD
 function showDashCtxDeal(e,dealId){e.preventDefault();e.stopPropagation();dashCtxData={dealId,lk:null};const menu=document.getElementById('dash-ctx-menu');menu.style.left=Math.min(e.clientX,window.innerWidth-180)+'px';menu.style.top=Math.min(e.clientY,window.innerHeight-200)+'px';menu.classList.add('show');}
 function dashCtxAction(type){if(!dashCtxData)return;const{dealId,lk}=dashCtxData;const d=deals[dealId];if(!d)return;hideDashCtx();if(!lk){openDeal(dealId);toast('Open the deal to mark a specific lender as '+type);return;}const tr=document.createElement('tr');tr.dataset.lenderKey=lk;const state=d.lenderStates?.[lk]||'';if(state)tr.classList.add(state);showPopup(type,tr,dealId);}
 function dashCtxArchive(){if(!dashCtxData)return;const id=dashCtxData.dealId;hideDashCtx();deleteDeal(id);}
-function dashCtxDelete(){if(!dashCtxData)return;const id=dashCtxData.dealId;hideDashCtx();if(!confirm('Permanently delete this deal? This cannot be undone.'))return;recentlyDeleted.add(id);delete deals[id];delete dealFiles[id];saveLocal();deleteDealFromFirebase(id).then(()=>toast('Deal permanently deleted')).catch(()=>toast('Delete failed',true));renderAll();}
+function dashCtxDelete(){if(!dashCtxData)return;const id=dashCtxData.dealId;hideDashCtx();if(!confirm('Permanently delete this deal? This cannot be undone.'))return;recentlyDeleted.add(id);delete deals[id];delete dealFiles[id];openTabs=openTabs.filter(t=>t!==id);saveLocal();deleteDealFromFirebase(id).then(()=>toast('Deal permanently deleted')).catch(()=>toast('Delete failed',true));renderAll();}
 document.addEventListener('click',e=>{if(!document.getElementById('ctx-menu').contains(e.target)&&!document.getElementById('dash-ctx-menu').contains(e.target))hideCtx();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){hideCtx();closePopup();}});
 
