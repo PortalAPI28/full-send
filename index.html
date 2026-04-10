@@ -558,9 +558,11 @@ function setupFileHandling(id){const dz=document.getElementById('drop-zone-'+id)
 
 async function uploadFiles(id,files){
   const d=deals[id];if(!d)return;d.storedFiles=d.storedFiles||[];
+  const dz=document.getElementById('drop-zone-'+id);
   for(const file of Array.from(files)){
     if(d.storedFiles.find(f=>f.name===file.name)){toast(file.name+' already attached');continue;}
     const path=`deals/${id}/${file.name}`;
+    if(dz)dz.innerHTML=`<p style="color:var(--accent);">Uploading ${esc(file.name)}...</p>`;
     try{
       const r=await fetch(`https://firebasestorage.googleapis.com/v0/b/${STORAGE_BUCKET}/o?uploadType=media&name=${encodeURIComponent(path)}`,{method:'POST',headers:{'Content-Type':file.type||'application/octet-stream'},body:file});
       if(!r.ok)throw new Error('Upload failed');
@@ -569,13 +571,15 @@ async function uploadFiles(id,files){
       toast(file.name+' uploaded');
     }catch(e){toast('Failed to upload '+file.name,true);}
   }
+  if(dz)dz.innerHTML=`<p>Drag & Drop Files Here or Click to Browse</p>`;
   persist();renderDealFiles(id);
 }
 
 function renderDealFiles(id){
   const fl=document.getElementById('file-list-'+id);if(!fl)return;
   const d=deals[id];const stored=d?.storedFiles||[];
-  fl.innerHTML=stored.map((f,i)=>`<div class="file-item"><span>${esc(f.name)}</span><button class="file-remove" onclick="removeStoredFile('${id}',${i})">x</button></div>`).join('');
+  if(!stored.length){fl.innerHTML='';return;}
+  fl.innerHTML=`<div style="margin-top:10px;padding:10px;background:var(--green-dim);border:1px solid rgba(63,185,80,0.2);border-radius:var(--radius);"><div style="font-size:10px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">${stored.length} file${stored.length>1?'s':''} attached</div>${stored.map((f,i)=>`<div class="file-item"><span>${esc(f.name)}</span><button class="file-remove" onclick="removeStoredFile('${id}',${i})">x</button></div>`).join('')}</div>`;
 }
 
 async function removeStoredFile(id,idx){
