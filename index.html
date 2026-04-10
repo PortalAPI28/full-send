@@ -81,6 +81,22 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .pip-r{background:var(--red-dim);color:var(--red);}
 .sidebar-footer{padding:10px 12px;border-top:1px solid var(--border);font-size:10px;color:var(--text-muted);}
 
+/* Auth icon in tab bar */
+.tab-auth{display:flex;align-items:center;gap:6px;margin-left:auto;padding:4px 8px;white-space:nowrap;position:relative;}
+.tab-auth-name{font-size:11px;font-weight:600;color:var(--accent);}
+.tab-auth-icon{width:26px;height:26px;border-radius:50%;background:var(--accent-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--accent);transition:all 0.12s;}
+.tab-auth-icon:hover{background:rgba(88,166,255,0.2);}
+.tab-auth-login{font-size:11px;font-weight:600;color:var(--accent);cursor:pointer;margin-left:auto;padding:6px 12px;}
+.tab-auth-login:hover{text-decoration:underline;}
+.signout-dd{position:absolute;top:100%;right:0;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:3px;box-shadow:0 6px 16px rgba(0,0,0,0.4);display:none;z-index:200;margin-top:4px;}
+.signout-dd.show{display:block;}
+.signout-dd button{display:block;width:100%;padding:7px 14px;border:none;background:transparent;color:var(--red);font-family:var(--font);font-size:11px;font-weight:600;cursor:pointer;border-radius:4px;text-align:left;}
+.signout-dd button:hover{background:var(--red-dim);}
+
+/* Bulk action bar */
+.bulk-bar{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:var(--radius);margin-bottom:14px;font-size:12px;font-weight:600;color:var(--accent);}
+.bulk-bar .btn{font-size:11px;padding:5px 10px;}
+
 /* Main Panel */
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .tab-bar{display:flex;align-items:center;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 8px;min-height:38px;overflow-x:auto;gap:2px;}
@@ -291,8 +307,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <div class="app">
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header"><div class="sidebar-logo"><span>G</span> Gotham Full Send</div></div>
-    <div class="sidebar-auth"><button class="auth-btn" id="auth-btn" onclick="authenticate()">Sign in with Microsoft</button><button class="btn btn-ghost btn-sm" id="signout-btn" onclick="signOut()" style="display:none;width:100%;justify-content:center;margin-top:4px;font-size:10px;color:var(--red);">Sign Out</button><div class="auth-user" id="auth-user"></div></div>
-    <div class="sidebar-actions"><button class="btn btn-primary btn-full" onclick="createDeal()">+ New Deal</button></div>
+    <div class="sidebar-actions"><button class="btn btn-primary btn-full" onclick="createDeal()" style="font-size:14px;padding:10px 12px;">+ New Deal</button></div>
     <div style="padding:6px 12px;"><input id="sidebar-search" class="sidebar-search" placeholder="Search deals..." oninput="searchQuery=this.value.toLowerCase();renderSidebar();"></div>
     <div class="deal-list" id="deal-list"></div>
     <div class="sidebar-footer">
@@ -357,10 +372,10 @@ function persist(){saveLocal();saveToFirebase();}
 function setSyncStatus(on){const d=document.getElementById('sync-dot'),t=document.getElementById('sync-text');if(!firebaseUrl){t.textContent='Local mode';d.className='sync-dot offline';return;}d.className=on?'sync-dot':'sync-dot offline';t.textContent=on?'Synced':'Offline';}
 
 // Auth
-async function authenticate(){const btn=document.getElementById('auth-btn'),u=document.getElementById('auth-user');btn.textContent='Signing in...';try{const r=await msalInstance.loginPopup({scopes:['Mail.Send','User.Read'],prompt:'select_account'});const email=r.account.username.toLowerCase();if(!email.endsWith('@gothamcapitalfunding.com')){btn.textContent='Sign in with Microsoft';u.textContent='Not authorized';accessToken=null;alert('Access Denied: Only @gothamcapitalfunding.com emails are authorized.');return;}accessToken=r.accessToken;signedInUser=r.account;btn.textContent='● Signed In';btn.classList.add('signed-in');u.textContent=email;document.getElementById('signout-btn').style.display='flex';renderAll();}catch(e){btn.textContent='Sign in with Microsoft';u.textContent='Sign-in failed';}}
+async function authenticate(){try{const r=await msalInstance.loginPopup({scopes:['Mail.Send','User.Read'],prompt:'select_account'});const email=r.account.username.toLowerCase();if(!email.endsWith('@gothamcapitalfunding.com')){accessToken=null;alert('Access Denied: Only @gothamcapitalfunding.com emails are authorized.');return;}accessToken=r.accessToken;signedInUser=r.account;renderAll();}catch(e){}}
 async function ensureToken(){if(!signedInUser)return null;try{const r=await msalInstance.acquireTokenSilent({scopes:['Mail.Send','User.Read'],account:signedInUser});accessToken=r.accessToken;return accessToken;}catch(e){try{const r=await msalInstance.acquireTokenPopup({scopes:['Mail.Send','User.Read']});accessToken=r.accessToken;return accessToken;}catch(e2){return null;}}}
-function signOut(){msalInstance.logoutPopup().then(()=>{accessToken=null;signedInUser=null;document.getElementById('auth-btn').textContent='Sign in with Microsoft';document.getElementById('auth-btn').classList.remove('signed-in');document.getElementById('auth-user').textContent='';document.getElementById('signout-btn').style.display='none';renderAll();}).catch(()=>{});}
-(function(){const accts=msalInstance.getAllAccounts();if(accts.length){signedInUser=accts[0];const em=signedInUser.username.toLowerCase();if(em.endsWith('@gothamcapitalfunding.com')){document.getElementById('auth-btn').textContent='● Signed In';document.getElementById('auth-btn').classList.add('signed-in');document.getElementById('auth-user').textContent=em;document.getElementById('signout-btn').style.display='flex';msalInstance.acquireTokenSilent({scopes:['Mail.Send','User.Read'],account:signedInUser}).then(r=>{accessToken=r.accessToken;}).catch(()=>{});}}})();
+function signOut(){msalInstance.logoutPopup().then(()=>{accessToken=null;signedInUser=null;renderAll();}).catch(()=>{});}
+(function(){const accts=msalInstance.getAllAccounts();if(accts.length){signedInUser=accts[0];const em=signedInUser.username.toLowerCase();if(em.endsWith('@gothamcapitalfunding.com')){msalInstance.acquireTokenSilent({scopes:['Mail.Send','User.Read'],account:signedInUser}).then(r=>{accessToken=r.accessToken;}).catch(()=>{});}}})();
 
 // Helpers
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -396,8 +411,13 @@ function renderTabBar(){
   const ctx=['dashboard','funded','omns','monthly','archive'].includes(activeView)?activeView:lastTab;
   const mainTabs=['dashboard','funded','omns','monthly','archive'].map(v=>{const labels={dashboard:'Active Deals',funded:'Funded',omns:'OMNS',monthly:'Monthly',archive:'Archive'};return`<div class="tab-dash${ctx===v&&!deals[activeView]?' active':''}" onclick="showView('${v}')">${labels[v]}</div>`;}).join('');
   const dealTabs=openTabs.map(id=>{const d=deals[id];if(!d)return'';const name=getDealLabel(d);return`<div class="tab-deal${activeView===id?' active':''}" onclick="switchToTab('${id}')"><span class="tab-name">${esc(name)}</span><span class="tab-x" onclick="event.stopPropagation();closeTab('${id}')">&times;</span></div>`;}).join('');
-  document.getElementById('tab-bar').innerHTML=mainTabs+dealTabs;
+  const cu=getCU();let authHTML='';
+  if(signedInUser&&cu){const initial=cu.name.charAt(0).toUpperCase();authHTML=`<div class="tab-auth"><span class="tab-auth-name">${esc(cu.name)}</span><div class="tab-auth-icon" oncontextmenu="event.preventDefault();toggleSignoutDD();" onclick="toggleSignoutDD();">${initial}</div><div class="signout-dd" id="signout-dd"><button onclick="signOut()">Sign Out</button></div></div>`;}
+  else{authHTML=`<div class="tab-auth-login" onclick="authenticate()">Sign in with Microsoft</div>`;}
+  document.getElementById('tab-bar').innerHTML=mainTabs+dealTabs+authHTML;
 }
+function toggleSignoutDD(){const dd=document.getElementById('signout-dd');if(dd)dd.classList.toggle('show');}
+document.addEventListener('click',e=>{const dd=document.getElementById('signout-dd');if(dd&&!dd.parentElement.contains(e.target))dd.classList.remove('show');});
 function showView(v){if(!['dashboard','funded','omns','monthly','archive'].includes(activeView)&&deals[activeView])saveDealFromDOM(activeView);activeView=v;lastTab=v;saveLocal();renderAll();}
 function openDeal(id){if(!['dashboard','funded','omns','monthly','archive'].includes(activeView)&&deals[activeView])saveDealFromDOM(activeView);if(!openTabs.includes(id))openTabs.push(id);activeView=id;saveLocal();renderTabBar();renderSidebar();renderDealView(id);}
 function switchToTab(id){if(!['dashboard','funded','omns','monthly','archive'].includes(activeView)&&deals[activeView])saveDealFromDOM(activeView);activeView=id;saveLocal();renderTabBar();renderSidebar();renderDealView(id);}
@@ -438,8 +458,8 @@ function renderDashboard(){
   const lf=getAllLendersFlat();const approvals=[];
   ad.forEach(d=>{const p=getDealPips(d);ta+=p.approved;td2+=p.declined;
     if(!d.lenderStates||!d.approvalData)return;Object.entries(d.lenderStates).forEach(([lk,st])=>{if(st==='approved'&&d.approvalData[lk]){const a=d.approvalData[lk];const l=lf.find(x=>x.key===lk);const amt=parseCurrency(a.amount);totAppAmt+=amt;approvals.push({biz:d.fields?.business||'—',ln:l?l.name:lk,lk:lk,amt:a.amount||'',term:a.term||'',rate:a.rate||'',pay:a.payment||'',rep:getDRD(d)||'—',did:d.id});}});});
-  // Active deals table
-  let dealsHtml='';if(ad.length){dealsHtml=`<div class="section" style="margin-bottom:20px;"><div class="section-title">Active Deals</div><table class="dash-table"><thead><tr><th>Date</th><th>Business</th><th>Sent</th><th>Approved</th><th>Declined</th><th>Rep</th></tr></thead><tbody>${ad.map(d=>{const p=getDealPips(d);return`<tr onclick="openDeal('${d.id}')" oncontextmenu="showDashCtxDeal(event,'${d.id}')"><td style="font-family:var(--mono);font-size:12px;color:var(--text-muted);">${esc(d.fields?.date||'—')}</td><td class="dt-biz">${esc(getDealLabel(d))}</td><td><span class="deal-pip pip-y">${p.sent}</span></td><td><span class="deal-pip pip-g">${p.approved}</span></td><td><span class="deal-pip pip-r">${p.declined}</span></td><td style="font-size:12px;color:var(--accent);">${esc(getDRD(d)||'—')}</td></tr>`;}).join('')}</tbody></table></div>`;}
+  // Active deals table with checkboxes
+  let dealsHtml='';if(ad.length){dealsHtml=`<div id="bulk-bar" class="bulk-bar" style="display:none;"><span id="bulk-count">0 selected</span><button class="btn btn-danger btn-sm" onclick="bulkArchive()">Archive All</button><button class="btn btn-danger btn-sm" onclick="bulkDelete()">Delete All</button><button class="btn btn-sm" onclick="clearSelection()">Cancel</button></div><div class="section" style="margin-bottom:20px;"><div class="section-title">Active Deals</div><table class="dash-table"><thead><tr><th style="width:30px;"><input type="checkbox" onchange="toggleAllDeals(this.checked)" style="cursor:pointer;"></th><th>Date</th><th>Business</th><th>Sent</th><th>Approved</th><th>Declined</th><th>Rep</th></tr></thead><tbody>${ad.map(d=>{const p=getDealPips(d);return`<tr onclick="openDeal('${d.id}')" oncontextmenu="showDashCtxDeal(event,'${d.id}')"><td onclick="event.stopPropagation();"><input type="checkbox" class="deal-cb" data-did="${d.id}" onchange="updateBulkBar()" style="cursor:pointer;"></td><td style="font-family:var(--mono);font-size:12px;color:var(--text-muted);">${esc(d.fields?.date||'—')}</td><td class="dt-biz">${esc(getDealLabel(d))}</td><td><span class="deal-pip pip-y">${p.sent}</span></td><td><span class="deal-pip pip-g">${p.approved}</span></td><td><span class="deal-pip pip-r">${p.declined}</span></td><td style="font-size:12px;color:var(--accent);">${esc(getDRD(d)||'—')}</td></tr>`;}).join('')}</tbody></table></div>`;}
   let appHtml='';if(approvals.length){appHtml=`<div class="section" style="margin-bottom:20px;"><div class="section-title">Approval Details</div><table class="dash-table"><thead><tr><th>Status</th><th>Business</th><th>Lender</th><th>Amount</th><th>Term</th><th>Rate</th><th>Payment</th><th>Rep</th></tr></thead><tbody>${approvals.map(a=>`<tr onclick="openDeal('${a.did}')" oncontextmenu="showDashCtx(event,'${a.did}','${a.lk}')"><td><span style="font-size:10px;font-weight:700;color:var(--green);font-family:var(--mono);">APPROVED</span></td><td class="dt-biz">${esc(a.biz)}</td><td style="font-size:12px;">${esc(a.ln)}</td><td style="font-family:var(--mono);font-size:12px;color:var(--green);font-weight:600;">${esc(a.amt)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(a.term)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(a.rate)}</td><td style="font-family:var(--mono);font-size:12px;">${esc(a.pay)}</td><td style="font-size:12px;color:var(--accent);">${esc(a.rep)}</td></tr>`).join('')}</tbody></table></div>`;}
   c.innerHTML=`<div class="dash"><div class="dash-hero"><h2>Active Deals</h2></div><div class="stats-row"><div class="stat-card"><div class="stat-val stat-accent">${ad.length}</div><div class="stat-label">Active Deals</div></div><div class="stat-card"><div class="stat-val stat-green">$${Math.round(totAppAmt).toLocaleString()}</div><div class="stat-label">Total Approval Amt</div></div><div class="stat-card"><div class="stat-val stat-green">${ta}</div><div class="stat-label">Approved</div></div><div class="stat-card"><div class="stat-val stat-red">${td2}</div><div class="stat-label">Declined</div></div></div>${dealsHtml}${appHtml}${!ad.length?'<div class="empty-state"><h3>No active deals</h3><p>Click <strong>+ New Deal</strong> to get started.</p></div>':''}</div>`;
 }
@@ -496,6 +516,8 @@ function renderDealView(id){
   buildLenderTables(id,d);setupFileHandling(id);renderDealFiles(id);
   const view=c.querySelector('.deal-view');
   view.querySelectorAll('input,textarea').forEach(el=>{el.setAttribute('autocomplete','nope');el.setAttribute('data-lpignore','true');el.setAttribute('data-form-type','other');});
+  setupRevDoubleClick(view,id);
+  setupLenderDrag(view,id);
   view.addEventListener('input',(e)=>{
     saveDealFromDOM(id);renderSidebar();
     if(e.target.dataset.f==='business'){const v=e.target.value||'Untitled Deal';document.getElementById('dv-title').textContent=v;renderTabBar();}
@@ -573,6 +595,43 @@ function savePopup(type,dealId,lk){
   renderAll();
 }
 function closePopup(){const o=document.getElementById('popup-overlay');if(o)o.remove();}
+
+// Bulk actions for dashboard
+function getSelectedDealIds(){return Array.from(document.querySelectorAll('.deal-cb:checked')).map(cb=>cb.dataset.did);}
+function updateBulkBar(){const sel=getSelectedDealIds();const bar=document.getElementById('bulk-bar');const cnt=document.getElementById('bulk-count');if(!bar)return;if(sel.length){bar.style.display='flex';cnt.textContent=sel.length+' selected';}else{bar.style.display='none';}}
+function toggleAllDeals(checked){document.querySelectorAll('.deal-cb').forEach(cb=>{cb.checked=checked;});updateBulkBar();}
+function clearSelection(){document.querySelectorAll('.deal-cb').forEach(cb=>{cb.checked=false;});const ha=document.querySelector('.dash-table thead input[type=checkbox]');if(ha)ha.checked=false;updateBulkBar();}
+function bulkArchive(){const ids=getSelectedDealIds();if(!ids.length)return;if(!confirm(`Archive ${ids.length} deal(s)?`))return;ids.forEach(id=>{if(deals[id]){deals[id].archived=true;openTabs=openTabs.filter(t=>t!==id);}});persist();renderAll();toast(`${ids.length} deals archived`);}
+function bulkDelete(){const ids=getSelectedDealIds();if(!ids.length)return;if(!confirm(`Permanently delete ${ids.length} deal(s)? This cannot be undone.`))return;ids.forEach(id=>{recentlyDeleted.add(id);delete deals[id];delete dealFiles[id];openTabs=openTabs.filter(t=>t!==id);deleteDealFromFirebase(id);});saveLocal();renderAll();toast(`${ids.length} deals deleted`);}
+
+// Double-click fill for monthly revenue
+function setupRevDoubleClick(view,id){
+  view.querySelectorAll('.rev-table input[data-rev]').forEach(el=>{
+    el.addEventListener('dblclick',()=>{
+      const key=el.dataset.rev;const col=key.split('-')[1];const val=el.value;
+      view.querySelectorAll(`.rev-table input[data-rev]`).forEach(inp=>{
+        if(inp.dataset.rev.split('-')[1]===col){inp.value=val;}
+      });
+      saveDealFromDOM(id);
+    });
+  });
+}
+
+// Drag-select for lender rows
+function setupLenderDrag(view,id){
+  let dragging=false;
+  view.addEventListener('mousedown',e=>{
+    const tr=e.target.closest('tr[data-lender-key]');if(!tr)return;if(e.target.classList.contains('status-input'))return;if(e.button!==0)return;
+    if(tr.classList.contains('approved')||tr.classList.contains('declined')||tr.classList.contains('funded')||tr.classList.contains('omns'))return;
+    dragging=true;tr.classList.add('sent');
+  });
+  view.addEventListener('mouseover',e=>{
+    if(!dragging)return;const tr=e.target.closest('tr[data-lender-key]');if(!tr)return;
+    if(tr.classList.contains('approved')||tr.classList.contains('declined')||tr.classList.contains('funded')||tr.classList.contains('omns'))return;
+    tr.classList.add('sent');
+  });
+  document.addEventListener('mouseup',()=>{if(dragging){dragging=false;saveDealFromDOM(id);renderSidebar();}});
+}
 function hideCtx(){document.getElementById('ctx-menu').classList.remove('show');document.getElementById('dash-ctx-menu').classList.remove('show');ctxTarget=null;}
 let dashCtxData=null;
 function showDashCtx(e,dealId,lk){e.preventDefault();e.stopPropagation();dashCtxData={dealId,lk};const menu=document.getElementById('dash-ctx-menu');menu.style.left=Math.min(e.clientX,window.innerWidth-180)+'px';menu.style.top=Math.min(e.clientY,window.innerHeight-160)+'px';menu.classList.add('show');}
