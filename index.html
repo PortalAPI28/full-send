@@ -368,7 +368,7 @@ function loadLocal(){try{const r=localStorage.getItem(LS_KEY);if(r)deals=JSON.pa
 function saveLocal(){try{localStorage.setItem(LS_KEY,JSON.stringify(deals));localStorage.setItem(LS_VIEW,activeView);localStorage.setItem(LS_REPS,JSON.stringify(reps));localStorage.setItem(LS_HOOK,webhookUrl);}catch(e){}}
 function saveToFirebase(){if(!firebaseUrl)return;fetch(firebaseUrl+'/deals.json',{method:'PATCH',body:JSON.stringify(deals),headers:{'Content-Type':'application/json'}}).then(()=>setSyncStatus(true)).catch(()=>setSyncStatus(false));fetch(firebaseUrl+'/reps.json',{method:'PUT',body:JSON.stringify(reps),headers:{'Content-Type':'application/json'}}).catch(()=>{});if(webhookUrl)fetch(firebaseUrl+'/config/webhookUrl.json',{method:'PUT',body:JSON.stringify(webhookUrl),headers:{'Content-Type':'application/json'}}).catch(()=>{});}
 function deleteDealFromFirebase(id){if(!firebaseUrl)return;return fetch(firebaseUrl+'/deals/'+id+'.json',{method:'DELETE'});}
-function loadFromFirebase(cb){if(!firebaseUrl){cb();return;}Promise.all([fetch(firebaseUrl+'/deals.json').then(r=>r.json()),fetch(firebaseUrl+'/reps.json').then(r=>r.json()),fetch(firebaseUrl+'/config/webhookUrl.json').then(r=>r.json()).catch(()=>null)]).then(([dd,rr,wh])=>{if(dd&&typeof dd==='object'){const lo={};Object.keys(deals).forEach(k=>{if(!dd[k])lo[k]=deals[k];});deals=Object.assign({},dd,lo);}if(Array.isArray(rr)&&rr.length)reps=rr;if(wh&&typeof wh==='string')webhookUrl=wh;setSyncStatus(true);saveLocal();cb();}).catch(()=>{setSyncStatus(false);cb();});}
+function loadFromFirebase(cb){if(!firebaseUrl){cb();return;}Promise.all([fetch(firebaseUrl+'/deals.json').then(r=>r.json()),fetch(firebaseUrl+'/reps.json').then(r=>r.json()),fetch(firebaseUrl+'/config/webhookUrl.json').then(r=>r.json()).catch(()=>null)]).then(([dd,rr,wh])=>{if(dd&&typeof dd==='object'){const lo={};Object.keys(deals).forEach(k=>{if(!dd[k])lo[k]=deals[k];});Object.keys(dd).forEach(k=>{if(deals[k]&&deals[k].storedFiles&&deals[k].storedFiles.length&&(!dd[k].storedFiles||!dd[k].storedFiles.length)){dd[k].storedFiles=deals[k].storedFiles;}});deals=Object.assign({},dd,lo);}if(Array.isArray(rr)&&rr.length)reps=rr;if(wh&&typeof wh==='string')webhookUrl=wh;setSyncStatus(true);saveLocal();cb();}).catch(()=>{setSyncStatus(false);cb();});}
 function persist(){saveLocal();saveToFirebase();}
 function setSyncStatus(on){const d=document.getElementById('sync-dot'),t=document.getElementById('sync-text');if(!firebaseUrl){t.textContent='Local mode';d.className='sync-dot offline';return;}d.className=on?'sync-dot':'sync-dot offline';t.textContent=on?'Synced':'Offline';}
 
@@ -576,6 +576,8 @@ async function uploadFiles(id,files){
   }
   if(dz)dz.innerHTML='<p>Drag & Drop Files Here or Click to Browse</p>';
   persist();
+  // Direct save storedFiles to this deal's Firebase node to prevent polling race
+  if(firebaseUrl)fetch(firebaseUrl+'/deals/'+id+'/storedFiles.json',{method:'PUT',body:JSON.stringify(d.storedFiles),headers:{'Content-Type':'application/json'}});
   if(fl)buildFileListDOM(fl,d.storedFiles,id);
 }
 
@@ -602,7 +604,9 @@ async function removeStoredFile(id,idx){
   try{await fetch('https://firebasestorage.googleapis.com/v0/b/'+STORAGE_BUCKET+'/o/'+encodeURIComponent(f.path),{method:'DELETE'});}catch(e){}
   d.storedFiles.splice(idx,1);
   if(dealFiles[id])dealFiles[id].splice(idx,1);
-  persist();renderDealFiles(id);
+  persist();
+  if(firebaseUrl)fetch(firebaseUrl+'/deals/'+id+'/storedFiles.json',{method:'PUT',body:JSON.stringify(d.storedFiles||[]),headers:{'Content-Type':'application/json'}});
+  renderDealFiles(id);
 }
 
 async function storedFileToAttachment(f,idx,dealId){
@@ -723,7 +727,7 @@ function closeSettings(){const o=document.getElementById('settings-overlay');if(
 
 // Init
 loadLocal();loadFromFirebase(()=>{renderAll();});
-setInterval(()=>{if(!firebaseUrl)return;fetch(firebaseUrl+'/deals.json').then(r=>r.json()).then(data=>{if(!data||typeof data!=='object')return;let ch=false;Object.keys(data).forEach(k=>{if(recentlyDeleted.has(k))return;if(JSON.stringify(data[k])!==JSON.stringify(deals[k])){deals[k]=data[k];ch=true;}});Object.keys(deals).forEach(k=>{if(!data[k]&&!recentlyDeleted.has(k)){delete deals[k];ch=true;}});if(ch){saveLocal();renderChrome();}}).catch(()=>{});fetch(firebaseUrl+'/reps.json').then(r=>r.json()).then(data=>{if(Array.isArray(data)&&JSON.stringify(data)!==JSON.stringify(reps)){reps=data;saveLocal();renderChrome();}}).catch(()=>{});},5000);
+setInterval(()=>{if(!firebaseUrl)return;fetch(firebaseUrl+'/deals.json').then(r=>r.json()).then(data=>{if(!data||typeof data!=='object')return;let ch=false;Object.keys(data).forEach(k=>{if(recentlyDeleted.has(k))return;if(JSON.stringify(data[k])!==JSON.stringify(deals[k])){var localFiles=(deals[k]&&deals[k].storedFiles&&deals[k].storedFiles.length)?deals[k].storedFiles:null;deals[k]=data[k];if(localFiles&&(!deals[k].storedFiles||!deals[k].storedFiles.length)){deals[k].storedFiles=localFiles;}ch=true;}});Object.keys(deals).forEach(k=>{if(!data[k]&&!recentlyDeleted.has(k)){delete deals[k];ch=true;}});if(ch){saveLocal();renderChrome();}}).catch(()=>{});fetch(firebaseUrl+'/reps.json').then(r=>r.json()).then(data=>{if(Array.isArray(data)&&JSON.stringify(data)!==JSON.stringify(reps)){reps=data;saveLocal();renderChrome();}}).catch(()=>{});},5000);
 </script>
 </body>
 </html>
