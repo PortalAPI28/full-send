@@ -85,9 +85,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .tab-bar{display:flex;align-items:center;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 8px;min-height:38px;overflow-x:auto;gap:2px;}
 .tab-bar::-webkit-scrollbar{height:0;}
-.tab-dash{padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text-muted);border-bottom:2px solid transparent;transition:all 0.12s;white-space:nowrap;}
-.tab-dash:hover{color:var(--text);}
-.tab-dash.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-dash{padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text-muted);background:var(--card);border:1px solid var(--border);border-bottom:none;border-radius:8px 8px 0 0;margin-bottom:-1px;transition:all 0.12s;white-space:nowrap;}
+.tab-dash:hover{color:var(--text);background:var(--card-hover);}
+.tab-dash.active{color:var(--accent);background:var(--bg);border-color:var(--accent);border-bottom:1px solid var(--bg);}
 .tab-deal{display:flex;align-items:center;gap:6px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;color:var(--text-muted);background:var(--card);border:1px solid var(--border);border-bottom:none;border-radius:8px 8px 0 0;margin-bottom:-1px;transition:all 0.12s;white-space:nowrap;max-width:160px;}
 .tab-deal:hover{color:var(--text);background:var(--card-hover);}
 .tab-deal.active{color:var(--accent);background:var(--bg);border-color:var(--accent);border-bottom:1px solid var(--bg);}
@@ -386,7 +386,7 @@ function getDealMonth(d){const dt=d.fields?.date;if(!dt)return null;const p=dt.s
 function getDealYear(d){const dt=d.fields?.date;if(!dt)return null;return parseInt(dt.split('-')[0]);}
 
 // CRUD
-function createDeal(){const d=newDealData();const mn=myRepName();if(mn&&REP_CHECKLIST.includes(mn))d.reps=[mn];deals[d.id]=d;activeView=d.id;persist();renderAll();}
+function createDeal(){const d=newDealData();const mn=myRepName();if(mn&&REP_CHECKLIST.includes(mn))d.reps=[mn];deals[d.id]=d;openTabs.push(d.id);activeView=d.id;persist();renderTabBar();renderSidebar();renderDealView(d.id);}
 function deleteDeal(id){if(!confirm('Archive this deal?'))return;deals[id].archived=true;openTabs=openTabs.filter(t=>t!==id);if(activeView===id){if(openTabs.length)switchToTab(openTabs[openTabs.length-1]);else{activeView='dashboard';}}persist();renderAll();toast('Deal archived');}
 function restoreDeal(id){if(!deals[id])return;delete deals[id].archived;persist();renderAll();toast('Deal restored');}
 function permanentDelete(id){if(!confirm('Permanently delete this deal? This cannot be undone.'))return;recentlyDeleted.add(id);delete deals[id];delete dealFiles[id];openTabs=openTabs.filter(t=>t!==id);if(activeView===id)activeView='archive';saveLocal();deleteDealFromFirebase(id).then(()=>{toast('Deal permanently deleted');}).catch(()=>{toast('Delete failed',true);});renderAll();}
@@ -500,18 +500,25 @@ function renderDealView(id){
     if(e.target.dataset.f==='business'){const v=e.target.value||'Untitled Deal';document.getElementById('dv-title').textContent=v;renderTabBar();}
   });
   view.addEventListener('change',()=>{saveDealFromDOM(id);renderSidebar();});
-  // Arrow key navigation between fields
+  // 4-way arrow key navigation between fields
   view.addEventListener('keydown',(e)=>{
     if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;
-    const el=e.target;if(el.tagName!=='INPUT'||el.type==='date'||el.type==='file')return;
+    const el=e.target;if(el.tagName!=='INPUT'||el.type==='date'||el.type==='file'||el.type==='radio')return;
     if(e.key==='ArrowLeft'&&el.selectionStart!==0)return;
     if(e.key==='ArrowRight'&&el.selectionStart!==el.value.length)return;
-    const inputs=Array.from(view.querySelectorAll('input:not([type=radio]):not([type=file]):not([type=date]),textarea'));
+    const inputs=Array.from(view.querySelectorAll('input:not([type=radio]):not([type=file]),textarea'));
     const idx=inputs.indexOf(el);if(idx===-1)return;
-    let next=-1;
-    if(e.key==='ArrowDown'||e.key==='ArrowRight')next=idx+1;
-    else if(e.key==='ArrowUp'||e.key==='ArrowLeft')next=idx-1;
-    if(next>=0&&next<inputs.length){e.preventDefault();inputs[next].focus();}
+    const rect=el.getBoundingClientRect();const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+    if(e.key==='ArrowLeft'){const prev=idx-1;if(prev>=0){e.preventDefault();inputs[prev].focus();}return;}
+    if(e.key==='ArrowRight'){const next=idx+1;if(next<inputs.length){e.preventDefault();inputs[next].focus();}return;}
+    // Up/Down: find closest field in the right direction by position
+    let best=null,bestDist=Infinity;
+    inputs.forEach((inp,i)=>{if(i===idx)return;const r=inp.getBoundingClientRect();const ix=r.left+r.width/2,iy=r.top+r.height/2;
+      if(e.key==='ArrowDown'&&iy<=cy+5)return;if(e.key==='ArrowUp'&&iy>=cy-5)return;
+      const dist=Math.abs(ix-cx)*0.5+Math.abs(iy-cy);
+      if(dist<bestDist){bestDist=dist;best=inp;}
+    });
+    if(best){e.preventDefault();best.focus();}
   });
 }
 
