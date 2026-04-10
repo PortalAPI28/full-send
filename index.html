@@ -558,40 +558,64 @@ function setupFileHandling(id){const dz=document.getElementById('drop-zone-'+id)
 
 async function uploadFiles(id,files){
   const d=deals[id];if(!d)return;d.storedFiles=d.storedFiles||[];
+  if(!dealFiles[id])dealFiles[id]=[];
   const dz=document.getElementById('drop-zone-'+id);
+  const fl=document.getElementById('file-list-'+id);
   for(const file of Array.from(files)){
     if(d.storedFiles.find(f=>f.name===file.name)){toast(file.name+' already attached');continue;}
-    const path=`deals/${id}/${file.name}`;
-    if(dz)dz.innerHTML=`<p style="color:var(--accent);">Uploading ${esc(file.name)}...</p>`;
+    const path='deals/'+id+'/'+file.name;
+    if(dz)dz.innerHTML='<p style="color:var(--accent);">Uploading '+esc(file.name)+'...</p>';
     try{
-      const r=await fetch(`https://firebasestorage.googleapis.com/v0/b/${STORAGE_BUCKET}/o?uploadType=media&name=${encodeURIComponent(path)}`,{method:'POST',headers:{'Content-Type':file.type||'application/octet-stream'},body:file});
+      const r=await fetch('https://firebasestorage.googleapis.com/v0/b/'+STORAGE_BUCKET+'/o?uploadType=media&name='+encodeURIComponent(path),{method:'POST',headers:{'Content-Type':file.type||'application/octet-stream'},body:file});
       if(!r.ok)throw new Error('Upload failed');
-      const url=`https://firebasestorage.googleapis.com/v0/b/${STORAGE_BUCKET}/o/${encodeURIComponent(path)}?alt=media`;
+      const url='https://firebasestorage.googleapis.com/v0/b/'+STORAGE_BUCKET+'/o/'+encodeURIComponent(path)+'?alt=media';
       d.storedFiles.push({name:file.name,url:url,path:path,type:file.type||'application/octet-stream'});
+      dealFiles[id].push(file);
       toast(file.name+' uploaded');
     }catch(e){toast('Failed to upload '+file.name,true);}
   }
-  if(dz)dz.innerHTML=`<p>Drag & Drop Files Here or Click to Browse</p>`;
-  persist();renderDealFiles(id);
+  if(dz)dz.innerHTML='<p>Drag & Drop Files Here or Click to Browse</p>';
+  persist();
+  if(fl)buildFileListDOM(fl,d.storedFiles,id);
 }
 
 function renderDealFiles(id){
-  const fl=document.getElementById('file-list-'+id);if(!fl)return;
-  const d=deals[id];const stored=d?.storedFiles||[];
-  if(!stored.length){fl.innerHTML='';return;}
-  fl.innerHTML=`<div style="margin-top:10px;padding:10px;background:var(--green-dim);border:1px solid rgba(63,185,80,0.2);border-radius:var(--radius);"><div style="font-size:10px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">${stored.length} file${stored.length>1?'s':''} attached</div>${stored.map((f,i)=>`<div class="file-item"><span>${esc(f.name)}</span><button class="file-remove" onclick="removeStoredFile('${id}',${i})">x</button></div>`).join('')}</div>`;
+  var fl=document.getElementById('file-list-'+id);if(!fl)return;
+  var d=deals[id];if(!d)return;
+  buildFileListDOM(fl,d.storedFiles||[],id);
+}
+
+function buildFileListDOM(el,files,dealId){
+  if(!files||!files.length){el.innerHTML='';return;}
+  var html='<div style="margin-top:10px;padding:10px;background:var(--green-dim);border:1px solid rgba(63,185,80,0.2);border-radius:var(--radius);">';
+  html+='<div style="font-size:10px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">'+files.length+' file'+(files.length>1?'s':'')+' attached</div>';
+  for(var i=0;i<files.length;i++){
+    html+='<div class="file-item"><span>'+esc(files[i].name)+'</span><button class="file-remove" onclick="removeStoredFile(\''+dealId+'\','+i+')">x</button></div>';
+  }
+  html+='</div>';
+  el.innerHTML=html;
 }
 
 async function removeStoredFile(id,idx){
   const d=deals[id];if(!d||!d.storedFiles)return;
   const f=d.storedFiles[idx];if(!f)return;
-  try{await fetch(`https://firebasestorage.googleapis.com/v0/b/${STORAGE_BUCKET}/o/${encodeURIComponent(f.path)}`,{method:'DELETE'});}catch(e){}
-  d.storedFiles.splice(idx,1);persist();renderDealFiles(id);
+  try{await fetch('https://firebasestorage.googleapis.com/v0/b/'+STORAGE_BUCKET+'/o/'+encodeURIComponent(f.path),{method:'DELETE'});}catch(e){}
+  d.storedFiles.splice(idx,1);
+  if(dealFiles[id])dealFiles[id].splice(idx,1);
+  persist();renderDealFiles(id);
 }
 
-async function storedFileToAttachment(f){
-  const r=await fetch(f.url);const blob=await r.blob();
-  return new Promise((res,rej)=>{const reader=new FileReader();reader.onload=()=>res({'@odata.type':'#microsoft.graph.fileAttachment',name:f.name,contentBytes:reader.result.split(',')[1]});reader.onerror=rej;reader.readAsDataURL(blob);});
+async function storedFileToAttachment(f,idx,dealId){
+  // Try in-memory file first (current session), fall back to Storage URL
+  if(dealId&&dealFiles[dealId]&&dealFiles[dealId][idx]){
+    var file=dealFiles[dealId][idx];
+    return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res({'@odata.type':'#microsoft.graph.fileAttachment',name:file.name,contentBytes:r.result.split(',')[1]});};r.onerror=rej;r.readAsDataURL(file);});
+  }
+  // Fall back to fetching from Storage URL
+  try{
+    var r=await fetch(f.url);var blob=await r.blob();
+    return new Promise(function(res,rej){var reader=new FileReader();reader.onload=function(){res({'@odata.type':'#microsoft.graph.fileAttachment',name:f.name,contentBytes:reader.result.split(',')[1]});};reader.onerror=rej;reader.readAsDataURL(blob);});
+  }catch(e){toast('Could not load '+f.name,true);return null;}
 }
 
 function saveDealFromDOM(id){
@@ -684,7 +708,7 @@ document.addEventListener('click',e=>{if(!document.getElementById('ctx-menu').co
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){hideCtx();closePopup();}});
 
 // Email sending
-async function sendToHighlighted(id){saveDealFromDOM(id);const d=deals[id];if(!d)return;d.emailedLenders=d.emailedLenders||[];const allL=getAllLendersFlat();const highlighted=[];document.querySelectorAll(`[data-deal-id="${id}"] tr.sent[data-lender-key]`).forEach(tr=>{const lk=tr.dataset.lenderKey;const l=allL.find(x=>x.key===lk);if(l&&!l.portal&&l.to)highlighted.push(l);});if(!highlighted.length){alert('No emailable lenders highlighted.');return;}const newToSend=highlighted.filter(l=>!d.emailedLenders.includes(l.key));const alreadyE=highlighted.filter(l=>d.emailedLenders.includes(l.key));if(!newToSend.length){alert(`All ${alreadyE.length} highlighted lenders already emailed. Use Force Re-send.`);return;}const ef=d.emailFields||{};const subject=ef.subject||'***New Deal*** - ';const status=ef.status||'';const biz=d.fields?.business||'';if(!biz){alert('Fill in Business Name first.');return;}if(!status){alert('Fill in Status field.');return;}const token=await ensureToken();if(!token){alert('Sign in with Microsoft first.');return;}const skipMsg=alreadyE.length?` (skipping ${alreadyE.length} already emailed)`:'';if(!confirm(`Send ${newToSend.length} emails from ${signedInUser.username}?${skipMsg}`))return;const industry=d.fields?.industry||'';const balances=ef.balances||'';const notes=ef.notes||'';let body=`***New Deal*** - ${biz}<br><br><b><u>Status:</u></b> ${status}<br><br>`;if(industry)body+=`<b><u>Industry:</u></b> ${industry}<br><br>`;if(balances)body+=`<b><u>Current Balances:</u></b><br>${balances.replace(/\n/g,'<br>')}<br><br>`;if(notes)body+=`<b><u>Notes:</u></b><br>${notes.replace(/\n/g,'<br>')}<br><br>`;body+=`<br><br><span style="font-size:14pt;font-weight:bold;">Gotham Capital</span><br><span style="font-size:12pt;font-style:italic;">Submissions</span><br><br>40 Wall St., New York, NY 10005<br>gothamcapitalfunding.com<br><br><span style="font-size:9pt;font-style:italic;">CONFIDENTIALITY NOTICE: The contents of this email message and any attachments are intended solely for the addressee(s) and may contain confidential and/or privileged information and may be legally protected from disclosure. If you are not the intended recipient of this message or their agent, or if this message has been addressed to you in error, please immediately alert the sender by reply email and then delete this message and any attachments. If you are not the intended recipient, you are hereby notified that any use, dissemination, copying, or storage of this message or its attachments is strictly prohibited. Disclaimer: This e-mail message has been sent to you by an independent contractor of RJ Marketing Group Inc, DBA Gotham Capital. ("GC"). The sender of this message is not authorized to exceed the scope of their authority, in the limited capacity in which they serve as an independent contractor of GC, and any information transmitted by the sender in violation of same, is not endorsed by GC, nor does it reflect the position, statements, or opinions of GC. GC assumes no liability for the contents of this e-mail.</span>`;const storedF=d.storedFiles||[];let attachments=[];if(storedF.length)attachments=await Promise.all(storedF.map(storedFileToAttachment));const addCC=ef.cc?ef.cc.split(',').map(e=>e.trim()).filter(e=>e):[];const sendBtn=document.getElementById('send-btn-'+id),ps=document.getElementById('progress-'+id),pf=document.getElementById('pf-'+id),pt=document.getElementById('pt-'+id),rd=document.getElementById('send-results-'+id);sendBtn.disabled=true;ps.style.display='block';rd.innerHTML='';let success=0;const failed=[];for(let i=0;i<newToSend.length;i++){const l=newToSend[i];const pct=Math.round(((i+1)/newToSend.length)*100);pf.style.width=pct+'%';pf.textContent=pct+'%';pt.textContent=`Sending to ${l.name}... (${i+1}/${newToSend.length})`;const allCC=[...(l.cc||[]),JASON_EMAIL,...addCC];try{await sendOneEmail(l.to,allCC,subject,body,attachments,token);success++;if(!d.emailedLenders.includes(l.key))d.emailedLenders.push(l.key);}catch(err){if(err.message&&err.message.includes('429')){pt.textContent=`Rate limited — retrying ${l.name}...`;await sleep(3000);try{const ft=await ensureToken();await sendOneEmail(l.to,allCC,subject,body,attachments,ft||token);success++;if(!d.emailedLenders.includes(l.key))d.emailedLenders.push(l.key);}catch(e2){failed.push(l.name);}}else if(err.message&&err.message.includes('401')){const ft=await ensureToken();if(ft){try{await sendOneEmail(l.to,allCC,subject,body,attachments,ft);success++;if(!d.emailedLenders.includes(l.key))d.emailedLenders.push(l.key);}catch(e3){failed.push(l.name);}}else failed.push(l.name);}else failed.push(l.name);}if(i<newToSend.length-1)await sleep(2000);}persist();pt.textContent='Complete!';sendBtn.disabled=false;rd.innerHTML=failed.length===0?`<div class="send-results success">All ${success} emails sent!${skipMsg}</div>`:`<div class="send-results partial">Sent ${success} of ${newToSend.length}.${skipMsg}<div class="failed-list">Failed: ${failed.join(', ')}</div></div>`;setTimeout(()=>{ps.style.display='none';pf.style.width='0%';pf.textContent='0%';renderDealView(id);},3000);}
+async function sendToHighlighted(id){saveDealFromDOM(id);const d=deals[id];if(!d)return;d.emailedLenders=d.emailedLenders||[];const allL=getAllLendersFlat();const highlighted=[];document.querySelectorAll(`[data-deal-id="${id}"] tr.sent[data-lender-key]`).forEach(tr=>{const lk=tr.dataset.lenderKey;const l=allL.find(x=>x.key===lk);if(l&&!l.portal&&l.to)highlighted.push(l);});if(!highlighted.length){alert('No emailable lenders highlighted.');return;}const newToSend=highlighted.filter(l=>!d.emailedLenders.includes(l.key));const alreadyE=highlighted.filter(l=>d.emailedLenders.includes(l.key));if(!newToSend.length){alert(`All ${alreadyE.length} highlighted lenders already emailed. Use Force Re-send.`);return;}const ef=d.emailFields||{};const subject=ef.subject||'***New Deal*** - ';const status=ef.status||'';const biz=d.fields?.business||'';if(!biz){alert('Fill in Business Name first.');return;}if(!status){alert('Fill in Status field.');return;}const token=await ensureToken();if(!token){alert('Sign in with Microsoft first.');return;}const skipMsg=alreadyE.length?` (skipping ${alreadyE.length} already emailed)`:'';if(!confirm(`Send ${newToSend.length} emails from ${signedInUser.username}?${skipMsg}`))return;const industry=d.fields?.industry||'';const balances=ef.balances||'';const notes=ef.notes||'';let body=`***New Deal*** - ${biz}<br><br><b><u>Status:</u></b> ${status}<br><br>`;if(industry)body+=`<b><u>Industry:</u></b> ${industry}<br><br>`;if(balances)body+=`<b><u>Current Balances:</u></b><br>${balances.replace(/\n/g,'<br>')}<br><br>`;if(notes)body+=`<b><u>Notes:</u></b><br>${notes.replace(/\n/g,'<br>')}<br><br>`;body+=`<br><br><span style="font-size:14pt;font-weight:bold;">Gotham Capital</span><br><span style="font-size:12pt;font-style:italic;">Submissions</span><br><br>40 Wall St., New York, NY 10005<br>gothamcapitalfunding.com<br><br><span style="font-size:9pt;font-style:italic;">CONFIDENTIALITY NOTICE: The contents of this email message and any attachments are intended solely for the addressee(s) and may contain confidential and/or privileged information and may be legally protected from disclosure. If you are not the intended recipient of this message or their agent, or if this message has been addressed to you in error, please immediately alert the sender by reply email and then delete this message and any attachments. If you are not the intended recipient, you are hereby notified that any use, dissemination, copying, or storage of this message or its attachments is strictly prohibited. Disclaimer: This e-mail message has been sent to you by an independent contractor of RJ Marketing Group Inc, DBA Gotham Capital. ("GC"). The sender of this message is not authorized to exceed the scope of their authority, in the limited capacity in which they serve as an independent contractor of GC, and any information transmitted by the sender in violation of same, is not endorsed by GC, nor does it reflect the position, statements, or opinions of GC. GC assumes no liability for the contents of this e-mail.</span>`;const storedF=d.storedFiles||[];let attachments=[];if(storedF.length){attachments=(await Promise.all(storedF.map(function(f,i){return storedFileToAttachment(f,i,id);}))).filter(function(a){return a!==null;});}const addCC=ef.cc?ef.cc.split(',').map(e=>e.trim()).filter(e=>e):[];const sendBtn=document.getElementById('send-btn-'+id),ps=document.getElementById('progress-'+id),pf=document.getElementById('pf-'+id),pt=document.getElementById('pt-'+id),rd=document.getElementById('send-results-'+id);sendBtn.disabled=true;ps.style.display='block';rd.innerHTML='';let success=0;const failed=[];for(let i=0;i<newToSend.length;i++){const l=newToSend[i];const pct=Math.round(((i+1)/newToSend.length)*100);pf.style.width=pct+'%';pf.textContent=pct+'%';pt.textContent=`Sending to ${l.name}... (${i+1}/${newToSend.length})`;const allCC=[...(l.cc||[]),JASON_EMAIL,...addCC];try{await sendOneEmail(l.to,allCC,subject,body,attachments,token);success++;if(!d.emailedLenders.includes(l.key))d.emailedLenders.push(l.key);}catch(err){if(err.message&&err.message.includes('429')){pt.textContent=`Rate limited — retrying ${l.name}...`;await sleep(3000);try{const ft=await ensureToken();await sendOneEmail(l.to,allCC,subject,body,attachments,ft||token);success++;if(!d.emailedLenders.includes(l.key))d.emailedLenders.push(l.key);}catch(e2){failed.push(l.name);}}else if(err.message&&err.message.includes('401')){const ft=await ensureToken();if(ft){try{await sendOneEmail(l.to,allCC,subject,body,attachments,ft);success++;if(!d.emailedLenders.includes(l.key))d.emailedLenders.push(l.key);}catch(e3){failed.push(l.name);}}else failed.push(l.name);}else failed.push(l.name);}if(i<newToSend.length-1)await sleep(2000);}persist();pt.textContent='Complete!';sendBtn.disabled=false;rd.innerHTML=failed.length===0?`<div class="send-results success">All ${success} emails sent!${skipMsg}</div>`:`<div class="send-results partial">Sent ${success} of ${newToSend.length}.${skipMsg}<div class="failed-list">Failed: ${failed.join(', ')}</div></div>`;setTimeout(()=>{ps.style.display='none';pf.style.width='0%';pf.textContent='0%';renderDealView(id);},3000);}
 async function sendOneEmail(to,cc,subject,body,att,token){const msg={message:{subject,body:{contentType:'HTML',content:body},toRecipients:[{emailAddress:{address:to}}],ccRecipients:cc.map(e=>({emailAddress:{address:e}}))}};if(att.length)msg.message.attachments=att;const r=await fetch('https://graph.microsoft.com/v1.0/me/sendMail',{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(msg)});if(!r.ok)throw new Error(`${r.status}`);}
 function fileToAttachment(){}
 
