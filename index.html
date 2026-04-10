@@ -494,6 +494,7 @@ function renderDealView(id){
   <button class="btn-send" id="send-btn-${id}" onclick="sendToHighlighted('${id}')">Send to Highlighted Lenders</button>
   <div class="progress-section" id="progress-${id}"><div class="progress-bar"><div class="progress-fill" id="pf-${id}">0%</div></div><div class="progress-text" id="pt-${id}"></div></div><div id="send-results-${id}"></div></div>`;
   buildLenderTables(id,d);setupFileHandling(id);renderDealFiles(id);
+  view.querySelectorAll('input,textarea').forEach(el=>{el.setAttribute('autocomplete','off');});
   const view=c.querySelector('.deal-view');
   view.addEventListener('input',(e)=>{
     saveDealFromDOM(id);renderSidebar();
