@@ -12,7 +12,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .app{display:flex;height:100vh;}
 
 /* Sidebar */
-.sidebar{width:260px;min-width:260px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.sidebar{width:260px;min-width:260px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width 0.2s,min-width 0.2s;}
+.sidebar.collapsed{width:0;min-width:0;}
+.sidebar-toggle{width:16px;min-width:16px;background:var(--bg2);border-right:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-muted);transition:all 0.12s;}
+.sidebar-toggle:hover{background:var(--card-hover);color:var(--text);}
 .sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border);}
 .sidebar-logo{font-size:15px;font-weight:800;letter-spacing:-0.5px;display:flex;align-items:center;gap:8px;}
 .sidebar-logo span{color:var(--accent);}
@@ -87,11 +90,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .tab-auth-icon{width:26px;height:26px;border-radius:50%;background:var(--accent-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--accent);transition:all 0.12s;}
 .tab-auth-icon:hover{background:rgba(88,166,255,0.2);}
 .tab-auth-login{font-size:11px;font-weight:600;color:var(--accent);cursor:pointer;margin-left:auto;padding:6px 12px;}
-.tab-auth-login:hover{text-decoration:underline;}
-.signout-dd{position:absolute;top:100%;right:0;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:3px;box-shadow:0 6px 16px rgba(0,0,0,0.4);display:none;z-index:200;margin-top:4px;}
-.signout-dd.show{display:block;}
-.signout-dd button{display:block;width:100%;padding:7px 14px;border:none;background:transparent;color:var(--red);font-family:var(--font);font-size:11px;font-weight:600;cursor:pointer;border-radius:4px;text-align:left;}
-.signout-dd button:hover{background:var(--red-dim);}
 
 /* Bulk action bar */
 .bulk-bar{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:var(--radius);margin-bottom:14px;font-size:12px;font-weight:600;color:var(--accent);}
@@ -319,6 +317,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
     </div>
   </div>
+  <div class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">&#9664;</div>
   <div class="main">
     <div class="tab-bar" id="tab-bar"></div>
     <div class="content" id="content"></div>
@@ -331,6 +330,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <button onclick="setLenderState('funded')"><span class="ctx-dot" style="background:var(--green);color:#fff;font-size:9px;font-weight:700;">$</span>Funded</button>
   <button onclick="setLenderState('omns')"><span class="ctx-dot" style="background:var(--orange);">&#8203;</span>OMNS</button>
   <button onclick="forceResend()"><svg class="ctx-ico" viewBox="0 0 16 16" fill="none"><path d="M13.5 2.5h-3.5m3.5 0v3.5m0-3.5L9.35 6.65" stroke="var(--purple)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 9v3a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1h3" stroke="var(--purple)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Force Re-send</button>
+  <button onclick="markAsEmailed()"><span class="ctx-dot" style="background:var(--yellow-dim);color:var(--yellow);font-size:10px;font-weight:700;">&#10003;</span>Mark As Emailed</button>
+  <button onclick="markAllHighlightedAsEmailed()"><span class="ctx-dot" style="background:var(--yellow-dim);color:var(--yellow);font-size:10px;font-weight:700;">&#10003;</span>Mark All Highlighted As Emailed</button>
   <button onclick="setLenderState('')"><span class="ctx-dot" style="background:var(--text-muted);">&#8203;</span>Clear Status</button>
 </div>
 
@@ -416,13 +417,12 @@ function renderTabBar(){
   const mainTabs=['dashboard','funded','omns','monthly','archive'].map(v=>{const labels={dashboard:'Active Deals',funded:'Funded',omns:'OMNS',monthly:'Monthly',archive:'Archive'};return`<div class="tab-dash${ctx===v&&!deals[activeView]?' active':''}" onclick="showView('${v}')">${labels[v]}</div>`;}).join('');
   const dealTabs=openTabs.map(id=>{const d=deals[id];if(!d)return'';const name=getDealLabel(d);return`<div class="tab-deal${activeView===id?' active':''}" onclick="switchToTab('${id}')"><span class="tab-name">${esc(name)}</span><span class="tab-x" onclick="event.stopPropagation();closeTab('${id}')">&times;</span></div>`;}).join('');
   const cu=getCU();let authHTML='';
-  if(signedInUser&&cu){const initial=cu.name.charAt(0).toUpperCase();authHTML=`<div class="tab-auth" onclick="event.stopPropagation();toggleSignoutDD();"><span class="tab-auth-name">${esc(cu.name)}</span><div class="tab-auth-icon">${initial}</div><div class="signout-dd" id="signout-dd"><button onclick="event.stopPropagation();signOut();">Sign Out</button></div></div>`;}
+  if(signedInUser&&cu){const initial=cu.name.charAt(0).toUpperCase();authHTML=`<div class="tab-auth"><span class="tab-auth-name">${esc(cu.name)}</span><div class="tab-auth-icon" oncontextmenu="event.preventDefault();event.stopPropagation();if(confirm('Sign out?'))signOut();" title="Right-click to sign out">${initial}</div></div>`;}
   else{authHTML=`<div class="tab-auth-login" onclick="authenticate()">Sign in with Microsoft</div>`;}
   document.getElementById('tab-bar').innerHTML=mainTabs+dealTabs+authHTML;
 }
-function toggleSignoutDD(){var dd=document.getElementById('signout-dd');if(dd)dd.classList.toggle('show');}
-document.addEventListener('click',e=>{const dd=document.getElementById('signout-dd');if(dd&&!dd.parentElement.contains(e.target))dd.classList.remove('show');});
 function showView(v){if(!['dashboard','funded','omns','monthly','archive'].includes(activeView)&&deals[activeView])saveDealFromDOM(activeView);activeView=v;lastTab=v;saveLocal();renderAll();}
+function toggleSidebar(){var sb=document.getElementById('sidebar'),btn=document.getElementById('sidebar-toggle');sb.classList.toggle('collapsed');btn.innerHTML=sb.classList.contains('collapsed')?'&#9654;':'&#9664;';}
 function openDeal(id){if(!['dashboard','funded','omns','monthly','archive'].includes(activeView)&&deals[activeView])saveDealFromDOM(activeView);if(!openTabs.includes(id))openTabs.push(id);activeView=id;saveLocal();renderTabBar();renderSidebar();renderDealView(id);}
 function switchToTab(id){if(!['dashboard','funded','omns','monthly','archive'].includes(activeView)&&deals[activeView])saveDealFromDOM(activeView);activeView=id;saveLocal();renderTabBar();renderSidebar();renderDealView(id);}
 function closeTab(id){if(deals[id])saveDealFromDOM(id);openTabs=openTabs.filter(t=>t!==id);if(activeView===id){if(openTabs.length)switchToTab(openTabs[openTabs.length-1]);else showView(lastTab);}else{renderTabBar();}}
@@ -453,7 +453,7 @@ function toggleRep(r){expandedReps[r]=!expandedReps[r];renderSidebar();}
 function selectRep(r){selectedRep=r;renderSidebar();renderCV();}
 function renderCV(){if(activeView==='dashboard')renderDashboard();else if(activeView==='funded')renderFundedView();else if(activeView==='omns')renderOMNSView();else if(activeView==='monthly')renderMonthlyView();else if(activeView==='archive')renderArchiveView();}
 function renderAll(){renderTabBar();renderSidebar();const v=activeView;if(v==='dashboard')renderDashboard();else if(v==='funded')renderFundedView();else if(v==='omns')renderOMNSView();else if(v==='monthly')renderMonthlyView();else if(v==='archive')renderArchiveView();else if(deals[v])renderDealView(v);else{activeView='dashboard';renderTabBar();renderDashboard();}}
-function renderChrome(){var dd=document.getElementById('signout-dd');if(!dd||!dd.classList.contains('show'))renderTabBar();renderSidebar();renderCV();}
+function renderChrome(){renderTabBar();renderSidebar();renderCV();}
 
 // Dashboard (Active Deals)
 function renderDashboard(){
@@ -660,6 +660,10 @@ function saveDealFromDOM(id){
 // Context menu
 function setLenderState(state){if(!ctxTarget)return;const{tr,dealId}=ctxTarget;if(state==='approved'){hideCtx();showPopup('approved',tr,dealId);return;}if(state==='funded'){hideCtx();showPopup('funded',tr,dealId);return;}if(state==='omns'){hideCtx();showPopup('omns',tr,dealId);return;}tr.classList.remove('sent','approved','declined','funded','omns');if(state)tr.classList.add(state);if(!state){const d=deals[dealId];if(d){if(d.approvalData)delete d.approvalData[tr.dataset.lenderKey];if(d.fundedData)delete d.fundedData[tr.dataset.lenderKey];if(d.omnsData)delete d.omnsData[tr.dataset.lenderKey];}}touchDeal(dealId);saveDealFromDOM(dealId);renderSidebar();hideCtx();}
 function forceResend(){if(!ctxTarget)return;const{tr,dealId}=ctxTarget;const lk=tr.dataset.lenderKey;const d=deals[dealId];if(d){d.emailedLenders=(d.emailedLenders||[]).filter(k=>k!==lk);tr.classList.remove('approved','declined','funded','omns');tr.classList.add('sent');touchDeal(dealId);saveDealFromDOM(dealId);renderDealView(dealId);toast('Marked for re-send');}hideCtx();}
+
+function markAsEmailed(){if(!ctxTarget)return;var tr=ctxTarget.tr,dealId=ctxTarget.dealId;var lk=tr.dataset.lenderKey;var d=deals[dealId];if(!d)return;d.emailedLenders=d.emailedLenders||[];if(!d.emailedLenders.includes(lk))d.emailedLenders.push(lk);if(!tr.classList.contains('sent'))tr.classList.add('sent');fetch(firebaseUrl+'/deals/'+dealId+'/emailedLenders.json',{method:'PUT',body:JSON.stringify(d.emailedLenders),headers:{'Content-Type':'application/json'}});saveDealFromDOM(dealId);renderDealView(dealId);toast('Marked as emailed');hideCtx();}
+
+function markAllHighlightedAsEmailed(){if(!ctxTarget)return;var dealId=ctxTarget.dealId;var d=deals[dealId];if(!d)return;d.emailedLenders=d.emailedLenders||[];var count=0;document.querySelectorAll('[data-deal-id="'+dealId+'"] tr.sent[data-lender-key]').forEach(function(tr){var lk=tr.dataset.lenderKey;if(!d.emailedLenders.includes(lk)){d.emailedLenders.push(lk);count++;}});fetch(firebaseUrl+'/deals/'+dealId+'/emailedLenders.json',{method:'PUT',body:JSON.stringify(d.emailedLenders),headers:{'Content-Type':'application/json'}});saveDealFromDOM(dealId);renderDealView(dealId);toast(count+' lender'+(count!==1?'s':'')+' marked as emailed');hideCtx();}
 
 function showPopup(type,tr,dealId){
   const lk=tr.dataset.lenderKey;const d=deals[dealId];const lf=getAllLendersFlat();const lender=lf.find(l=>l.key===lk);const ln=lender?lender.name:lk;const biz=d?.fields?.business||'Untitled';
